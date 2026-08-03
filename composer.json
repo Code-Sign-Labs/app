@@ -1,6 +1,14 @@
 {
-    "name": "code-sign-labs/controller",
-    "description": "Controller for Code Sign Labs",
+    "name": "code-sign-labs/app",
+    "description": "App Code Sign from Code Sign Labs",
+    "authors": [
+        {
+            "name": "Patryk Molenda",
+            "email": "kontakt@patrykmolenda.pl",
+            "homepage": "https://patrykmolenda.pl",
+            "role": "Developer"
+        }
+    ],
     "type": "project",
     "license": "MIT",
     "require": {

@@ -23,14 +23,14 @@ class InitCommand extends Command
 
     public function getDescription(): string
     {
-        return "Initialize Code Sign controller";
+        return "Initialize Code Sign app";
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Symfony style
         $style = new SymfonyStyle($input, $output);
-        $style->info("Initialize Code Sign controller");
+        $style->info("Initialize Code Sign App");
         // Create admin account
         $admin = new User();
         $admin->setName("admin")

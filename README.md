@@ -1,7 +1,7 @@
-# Code Sign Controller
+# Code Sign App
 
-This is an official repository for the Code Sign Controller, a tool designed to help developers manage their licensing and code signing processes more efficiently.
-The Code Sign Controller provides a user-friendly interface that allows developers to easily create and assign licenses.
+This is an official repository for the Code Sign App, a tool designed to help developers manage their licensing and code signing processes more efficiently.
+The Code Sign App provides a user-friendly interface that allows developers to easily create and assign licenses.
 
 ## Features
 - **License Management**: Create, assign, and manage licenses for your software projects.
@@ -15,7 +15,7 @@ To get started with the Code Sign Controller, follow these steps:
 
 ```bash
 # 1. Copy the repository to your local machine
-git clone https://github.com/Code-Sign-Labs/controller.git
+git clone https://github.com/Code-Sign-Labs/app.git
 cd controller
 
 # 2. Copy the example .env file
@@ -34,35 +34,12 @@ docker compose exec php composer install
 curl http://localhost:8080/
 ```
 
-### Container commands
+## List of things to do
 
-```bash
-# Enter the PHP container
-docker compose exec php bash
+Check out our [Trello](https://trello.com/b/ign4SDWN/code-sign) and see the list of things to do. If you want to contribute, please reach out to us.
 
-# Logs
-docker compose logs -f
-docker compose logs -f php
-docker compose logs -f nginx
 
-# Restart
-docker compose restart
+## Roadmap
 
-# Rebuild (after changes to Dockerfile)
-docker compose up -d --build
-
-# List containers
-docker compose ps
-
-# Check database status
-docker compose exec mariadb mysql -u codesign -pcodesign codesign -e "SHOW TABLES;"
-```
-
-### Configure ports
-
-By default, app runs on port 8080, but you can change it by modifying the `HTTP_PORT` variable in the `.env` file.
-
-```bash
-# In the .env file
-HTTP_PORT=9090
-```
+- [ ] Finish the basic version of Code Sign App
+- [ ] Publish Code Sign as docker image to Docker Hub

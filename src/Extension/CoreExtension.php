@@ -37,6 +37,12 @@ class CoreExtension extends AbstractExtension
                     return $value;
                 }
             ),
+            new TwigFunction(
+                "version",
+                function (): string {
+                    return file_get_contents(__DIR__ . "/../../VERSION");
+                }
+            )
         ];
     }
 
