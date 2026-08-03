@@ -29,7 +29,7 @@ class ConfigService
     {
         $config = new Config();
 
-        $config->setBaseUrl("http://localhost")
+        $config->setBaseUrl("http://localhost:8080")
             ->setInstanceName("CodeSign")
             ->setKeyPrefix("CS")
             ->setKeyPattern("XXX-X-XX-XXXXX-X-XXXXX-XXX-XXXXXXXX-XXX-XX-X")

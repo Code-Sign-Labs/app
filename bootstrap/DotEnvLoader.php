@@ -59,9 +59,14 @@ class DotEnvLoader
      */
     protected function setEnvVariable(string $key, mixed $value): void
     {
-        if(!array_key_exists($key, $_ENV)) {
-            $_ENV[$key] = $value;
-            putenv("$key=$value");
+        $envValue = getenv($key);
+        if ($envValue !== false) {
+            $value = $envValue;
         }
+
+        $_ENV[$key] = $value;
+        $_SERVER[$key] = $value;
+        putenv("$key=$value");
     }
+
 }

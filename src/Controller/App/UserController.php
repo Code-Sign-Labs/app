@@ -217,7 +217,7 @@ class UserController extends CoreAbstractController
                 return $this->redirect("/app/users/" . $user->getId() . "/edit");
             }
 
-            $userTarget->setPassword($password);
+            $userTarget->setPassword(password_hash($password, PASSWORD_DEFAULT));
         }
 
         try {
