@@ -1,0 +1,50 @@
+{% extends "app/template.twig" %}
+
+{% block page %}Products List{% endblock %}
+
+{% block content %}
+    <main class="p-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Products</h2>
+                <p class="text-sm text-gray-500 mt-1">Manage your software products and their licensing configuration.</p>
+            </div>
+            <a href="/app/products-new" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand hover:bg-brand-hover rounded-lg transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                New Product
+            </a>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline">{{ error }}</span>
+            </div>
+        {% endif %}
+
+        <!-- Product cards grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for product in products %}
+                <div class="bg-white rounded-xl border border-gray-200 p-5 hover:border-brand hover:shadow-sm transition cursor-pointer" onclick="window.location.href='/app/products/{{ product.slug }}'">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-11 h-11 rounded-lg bg-gray-500 flex items-center justify-center text-white font-bold text-lg">{{ product.name|slice(0, 1)|upper }}</div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium {% if product.status.value == "active" %}bg-green-50 text-green-700{% elseif product.status.value == "revoked" %}bg-yellow-50 text-yellow-700{% else %}bg-red-50 text-red-700{% endif %}">{{ product.status.value|upper }}</span>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900">{{ product.name }} · {{ product.version }}</h3>
+                    <p class="text-xs text-gray-500 mt-1">{{ product.description }}</p>
+                    <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-400">Licenses</p>
+                            <p class="text-sm font-semibold text-gray-900">{{ product.licenses.count }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400">Version</p>
+                            <p class="text-sm font-semibold text-gray-900">v{{ product.version }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+{% endblock %}

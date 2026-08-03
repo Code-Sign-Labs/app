@@ -1,0 +1,133 @@
+{% extends "app/template.twig" %}
+
+{% block page %}Settings{% endblock %}
+
+{% block content %}
+    <main class="p-8 max-w-4xl">
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-900">System Settings</h2>
+            <p class="text-sm text-gray-500 mt-1">Configure your CodeSign instance, security, and integrations.</p>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+                <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+        {% endif %}
+
+        <!-- Settings tabs -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="flex gap-6">
+                <button class="settings-tab active text-brand pb-3 text-sm font-medium hover:text-gray-700 border-b-2 border-transparent" onclick="switchTab(this, 'general')">General</button>
+                <button class="settings-tab pb-3 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent" onclick="switchTab(this, 'security')">Security</button>
+                <button class="settings-tab pb-3 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent" onclick="switchTab(this, 'email')">SMTP</button>
+            </nav>
+        </div>
+
+        <form method="POST">
+            <input type="hidden" name="__token" value="{{ csrf() }}">
+            <!-- General -->
+            <div id="tab-general" class="space-y-6">
+                <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                    <h3 class="text-sm font-semibold text-gray-900">Instance Configuration</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="instanceName" class="block text-sm font-medium text-gray-700 mb-1.5">Instance Name</label>
+                            <input type="text" name="instanceName" id="instanceName" value="{{ config.instanceName }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        </div>
+                        <div>
+                            <label for="baseUrl" class="block text-sm font-medium text-gray-700 mb-1.5">Base URL</label>
+                            <input type="url" name="baseUrl" id="baseUrl" value="{{ config.baseUrl }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                            <p class="text-xs text-gray-400 mt-1">The URL where your CodeSign instance is accessible.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                    <h3 class="text-sm font-semibold text-gray-900">License Key Format</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="keyPrefix" class="block text-sm font-medium text-gray-700 mb-1.5">Key Prefix</label>
+                            <input type="text" name="keyPrefix" id="keyPrefix" value="{{ config.keyPrefix }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        </div>
+                        <div>
+                            <label for="keyPattern" class="block text-sm font-medium text-gray-700 mb-1.5">Key Pattern</label>
+                            <input type="text" name="keyPattern" id="keyPattern" value="{{ config.keyPattern }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition font-mono">
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400">Preview: <code class="text-sm font-mono text-gray-700" id="exampleKey">CS-7K2F-9X4D-A8C3</code></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security -->
+            <div id="tab-security" class="hidden space-y-6">
+                <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                    <h3 class="text-sm font-semibold text-gray-900">Password Policy</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="minLength" class="block text-sm font-medium text-gray-700 mb-1.5">Minimum Length</label>
+                            <input type="number" name="minLength" id="minLength" value="{{ config.minPasswordLength }}" min="8" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="passwordRequiresUppercase" class="w-4 h-4 text-brand border-gray-300 rounded focus:ring-brand/20" {% if config.passwordRequiresUppercase %}checked{% endif %}>
+                            <span class="text-sm text-gray-700">Require uppercase letters</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="passwordRequiresNumbers" class="w-4 h-4 text-brand border-gray-300 rounded focus:ring-brand/20" {% if config.passwordRequiresNumbers %}checked{% endif %}>
+                            <span class="text-sm text-gray-700">Require numbers</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="passwordRequiresSpecial" class="w-4 h-4 text-brand border-gray-300 rounded focus:ring-brand/20" {% if config.passwordRequiresSpecial %}checked{% endif %}>
+                            <span class="text-sm text-gray-700">Require special characters</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div id="tab-email" class="hidden space-y-6">
+                <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                    <h3 class="text-sm font-semibold text-gray-900">SMTP Configuration</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="smtpHost" class="block text-sm font-medium text-gray-700 mb-1.5">SMTP Host</label>
+                            <input type="text" name="smtpHost" id="smtpHost" placeholder="smtp.gmail.com" value="{{ env("MESSENGER_HOST") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        </div>
+                        <div>
+                            <label for="smtpPort" class="block text-sm font-medium text-gray-700 mb-1.5">SMTP Port</label>
+                            <input type="number" name="smtpPort" id="smtpPort" placeholder="587" value="{{ env("MESSENGER_PORT") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="smtpUser" class="block text-sm font-medium text-gray-700 mb-1.5">SMTP Username</label>
+                            <input type="text" name="smtpUser" id="smtpUser" placeholder="noreply@acme.dev" value="{{ env("MESSENGER_NAME") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        </div>
+                        <div>
+                            <label for="smtpPass" class="block text-sm font-medium text-gray-700 mb-1.5">SMTP Password</label>
+                            <input type="password" name="smtpPass" id="smtpPass" placeholder="••••••••" value="{{ env("MESSENGER_MAIL_PASSWORD") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="fromEmail" class="block text-sm font-medium text-gray-700 mb-1.5">From Email</label>
+                        <input type="email" name="smtpMail" id="fromEmail" placeholder="Code Sign <noreply@acme.dev>" value="{{ env("MESSENGER_MAIL") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save bar -->
+            <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand hover:bg-brand-hover rounded-lg transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script src="/js/settings.js"></script>
+{% endblock %}

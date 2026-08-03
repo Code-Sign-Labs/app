@@ -1,0 +1,5 @@
+- API
+- Event System + Webhook System
+- Add batch license key creation
+- Tests
+- Find better way to designate the current Version

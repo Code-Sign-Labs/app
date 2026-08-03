@@ -1,0 +1,17 @@
+{
+  "kernel.boot": "A native event fired when the kernel has booted (before addons/router).",
+  "kernel.configure_error_handling": "Kernel step: configure PHP error/exception handling.",
+  "kernel.configure_debug": "Kernel step: bind debugbar/debug renderer into container.",
+  "kernel.configure_view_engine": "Kernel step: configure view engine and bind ViewEngineInterface.",
+  "kernel.configure_orm": "Kernel step: configure ORM and bind Doctrine EntityManager/Connection.",
+  "kernel.configure_addons": "Kernel step: initialize addons and register addon event handlers.",
+  "kernel.configure_router": "Kernel step: create Router and attach addon routes.",
+  "kernel.handle_request": "Kernel step: handle current request via Router (emits request.* events).",
+  "kernel.handle_tests": "Kernel step: handle test requests (emits tests.* events).",
+
+  "request.context.created": "A native event fired when RequestContext has been created and bound into the container.",
+  "request.received": "A native event fired when a request has been received (before routing).",
+  "response.sent": "A native event fired right before a response is sent to the client.",
+  "request.completed": "A native event fired when a request has completed.",
+  "request.failed": "A native event fired when a request has failed."
+}

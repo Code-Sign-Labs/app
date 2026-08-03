@@ -1,0 +1,104 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine next version
+        id: version
+        run: |
+          LAST_TAG=$(git tag --sort=-v:refname | head -n 1)
+          if [ -z "$LAST_TAG" ]; then
+            LAST_TAG="0.0.0"
+          fi
+          echo "Last tag: $LAST_TAG"
+          
+          COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
+          
+          MAJOR=0
+          MINOR=0
+            PATCH=0
+          
+          if echo "$COMMITS" | grep -qE "BREAKING CHANGE|!:"; then
+            MAJOR=1
+          elif echo "$COMMITS" | grep -qe "^feat"; then
+            MINOR=1;
+          else
+            PATCH=1;
+          fi
+          
+          IFS="." read -r M m p <<< "${LAST_TAG#v}"
+          M=$((M + MAJOR))
+          m=$((m + MINOR))
+          p=$((p + PATCH))
+          
+          if [ $MAJOR -eq 1 ]; then
+            m=0
+            p=0
+          elif [ $MINOR -eq 1 ]; then
+            p=0
+          fi
+          
+          NEW_VERSION="${M}.${m}.${p}"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Create VERSION file
+        run: |
+          echo "${{ steps.version.outputs.version }}" > VERSION
+          echo "Created VERSION file with: ${{ steps.version.outputs.version }}"
+
+      - name: Commit VERSION file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add VERSION
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git push origin main
+
+      - name: Create Git tag
+        run: |
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          LAST_TAG=$(git tag --sort=-v:refname | head -n 2 | tail -n 1)
+          if [ -z "$LAST_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          # Zastosuj multiline output
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          body: |
+            ## Changes in this release
+
+            ${{ steps.changelog.changelog }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

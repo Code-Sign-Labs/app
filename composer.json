@@ -1,0 +1,36 @@
+{
+    "require": {
+        "ext-zip": "*",
+        "ext-bz2": "*",
+        "ext-zlib": "*",
+        "ext-fileinfo": "*",
+        "ext-openssl": "*",
+        "twig/twig": "^3.21",
+        "illuminate/view": "^12.12",
+        "illuminate/filesystem": "^12.12",
+        "doctrine/orm": "^3.5",
+        "doctrine/migrations": "^3.9",
+        "doctrine/dbal": "^4.2",
+        "symfony/cache": "^7.2",
+        "phpmailer/phpmailer": "^6.10",
+        "ext-yaml": "*",
+        "ext-simplexml": "*",
+        "ramsey/uuid": "^4.9",
+      "ext-gd": "*",
+      "ext-curl": "*"
+    },
+    "require-dev": {
+        "symfony/debug-bundle": "^7.2",
+        "php-debugbar/php-debugbar": "^2.1"
+    },
+    "scripts": {
+        "tests": "php tests/bin/run-test.php"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Framework\\": "bootstrap/",
+            "App\\": "src/"
+        }
+    }
+}

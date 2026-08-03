@@ -1,0 +1,57 @@
+#!/usr/bin/env php
+<?php
+// bin/kernel
+
+use App\Commands\AddIpCommand;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Types\Type;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\ORMSetup;
+use Doctrine\ORM\Tools\Console\ConsoleRunner;
+use Doctrine\ORM\Tools\Console\EntityManagerProvider\SingleManagerProvider;
+use Framework\Configs\ConfigCore;
+use Framework\DotEnvLoader;
+use Framework\Utils\DoctrineUuidType;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$dotEnvLoader = new DotEnvLoader(
+    __DIR__ . '/../.env'
+);
+$dotEnvLoader->load();
+
+$configCore = new ConfigCore(
+    __DIR__ . '/../configs'
+);
+
+$namespaceConfig = $configCore->getConfig('namespace');
+$ormConfig = $configCore->getConfig('orm');
+if($ormConfig->get('orm.use')) {
+    $config = ORMSetup::createAttributeMetadataConfiguration(
+        paths: [$namespaceConfig->get("namespace.entity.path")],
+        isDevMode: true
+    );
+
+    if (!Type::hasType('uuid_binary')) {
+        Type::addType('uuid_binary', DoctrineUuidType::class);
+    }
+
+    $connection = DriverManager::getConnection($ormConfig->get('orm.connection'), $config);
+    $entityManager = new EntityManager($connection, $config);
+
+    $commands = [];
+
+    foreach(scandir(__DIR__ . '/../src/Commands') as $file) {
+        if(str_ends_with($file, '.php')) {
+            $className = 'App\\Commands\\' . str_replace('.php', '', $file);
+            if(class_exists($className)) {
+                $commands[] = new $className($entityManager);
+            }
+        }
+    }
+
+    ConsoleRunner::run(
+        new SingleManagerProvider($entityManager),
+        $commands
+    );
+}

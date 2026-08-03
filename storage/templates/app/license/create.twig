@@ -1,0 +1,96 @@
+{% extends "app/template.twig" %}
+
+{% block page %}New License{% endblock %}
+
+{% block content %}
+    <main class="p-8 max-w-3xl">
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Create New License</h2>
+            <p class="text-sm text-gray-500 mt-1">Generate a license key for a customer to activate your software.</p>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline">{{ error }}</span>
+            </div>
+        {% endif %}
+
+        <form class="space-y-6" method="POST">
+            <input type="hidden" name="__token" value="{{ csrf() }}">
+            <!-- Product -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                <h3 class="text-sm font-semibold text-gray-900">Product & Type</h3>
+
+                <div>
+                    <label for="product" class="block text-sm font-medium text-gray-700 mb-1.5">Product <span class="text-brand">*</span></label>
+                    <select id="product" required class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition bg-white" name="product">
+                        <option value="">Select a product...</option>
+                        {% for product in products %}
+                            <option value="{{ product.id }}" {% if productId == product.id %}selected{% endif %}>{{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">License Type <span class="text-brand">*</span></label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <input id="license-type-perpetual" type="radio" name="type" value="perpetual" class="peer sr-only" required>
+                            <label for="license-type-perpetual" class="block border-2 border-gray-200 rounded-lg p-3 cursor-pointer transition peer-checked:border-brand peer-checked:bg-brand-light/50">
+                            <div class="text-sm font-semibold text-gray-900">Perpetual</div>
+                            <div class="text-xs text-gray-500 mt-0.5">Lifetime access</div>
+                            </label>
+                        </div>
+                        <div>
+                            <input id="license-type-subscription" type="radio" name="type" value="subscription" class="peer sr-only" required>
+                            <label for="license-type-subscription" class="block border-2 border-gray-200 rounded-lg p-3 cursor-pointer transition hover:border-gray-300 peer-checked:border-brand peer-checked:bg-brand-light/50">
+                            <div class="text-sm font-semibold text-gray-900">Subscription</div>
+                            <div class="text-xs text-gray-500 mt-0.5">Recurring billing</div>
+                            </label>
+                        </div>
+                        <div>
+                            <input id="license-type-trial" type="radio" name="type" value="trial" class="peer sr-only" required>
+                            <label for="license-type-trial" class="block border-2 border-gray-200 rounded-lg p-3 cursor-pointer transition hover:border-gray-300 peer-checked:border-brand peer-checked:bg-brand-light/50">
+                            <div class="text-sm font-semibold text-gray-900">Trial</div>
+                            <div class="text-xs text-gray-500 mt-0.5">Time-limited</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                <h3 class="text-sm font-semibold text-gray-900">Configuration</h3>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="maxActivations" class="block text-sm font-medium text-gray-700 mb-1.5">Max Activations</label>
+                        <input type="number" id="maxActivations" value="1" min="1" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        <p class="text-xs text-gray-400 mt-1">Number of devices that can use this license.</p>
+                    </div>
+                    <div>
+                        <label for="expiration" class="block text-sm font-medium text-gray-700 mb-1.5">Expiration Date</label>
+                        <input type="date" id="expiration" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        <p class="text-xs text-gray-400 mt-1">Leave empty for perpetual licenses.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-gray-700 mb-1.5">Notes (internal)</label>
+                    <textarea id="notes" rows="3" placeholder="Add any internal notes about this license..." class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition resize-none"></textarea>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-end gap-3">
+                <a href="/app/licenses" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</a>
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand hover:bg-brand-hover rounded-lg transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Create License
+                </button>
+            </div>
+        </form>
+    </main>
+{% endblock %}

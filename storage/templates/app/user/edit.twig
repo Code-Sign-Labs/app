@@ -1,0 +1,89 @@
+{% extends "app/template.twig" %}
+
+{% block page %}Edit User{% endblock %}
+
+{% block content %}
+    <style>
+        #generated-password {
+            opacity: 1;
+            transition: opacity 1s ease;
+        }
+
+        #generated-password.pulse {
+            animation: pulse 0.8s infinite;
+        }
+
+        #generated-password.fade-out {
+            opacity: 0;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.6; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+    </style>
+    <main class="p-8 max-w-3xl">
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Edit User</h2>
+            <p class="text-sm text-gray-500 mt-1">Update the user information below.</p>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline">{{ error }}</span>
+            </div>
+        {% endif %}
+
+        <form class="space-y-6" method="POST">
+            <input type="hidden" name="__token" value="{{ csrf() }}">
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                <h3 class="text-sm font-semibold text-gray-900">Basic Information</h3>
+
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1.5">User Name <span class="text-brand">*</span></label>
+                    <input type="text" id="name" name="name" required value="{{ userTarget.name }}" placeholder="e.g. John Doe" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                </div>
+
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">Email <span class="text-brand">*</span></label>
+                    <input type="email" id="email" required name="email" value="{{ userTarget.email }}" placeholder="johndoe@gmail.com" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition resize-none">
+                </div>
+                <div>
+                    <button type="button" id="generatePasswordBtn" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand hover:bg-brand-hover rounded-lg transition shadow-sm">Generate Password</button>
+                    <p class="text-gray-500 hover:text-gray-700" id="generated-password"></p>
+                </div>
+                <div id="password-validation" class="text-sm text-gray-500"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                        <input type="password" id="password" name="password" value="" placeholder="" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                    </div>
+                    <div>
+                        <label for="rpassword" class="block text-sm font-medium text-gray-700 mb-1.5">Repeat Password</label>
+                        <input type="password" id="rpassword" name="rpassword" value="" placeholder="" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+                <a href="/app/users/{{ userTarget.id }}" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</a>
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand hover:bg-brand-hover rounded-lg transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        window.MIN_LENGTH = {{ config.minPasswordLength|default(8) }};
+        window.REQUIRE_NUMBER = {{ config.passwordRequireNumber|default(true) }};
+        window.REQUIRE_UPPERCASE = {{ config.passwordRequireUppercase|default(true) }};
+        window.REQUIRE_SPECIAL = {{ config.passwordRequireSpecial|default(true) }};
+    </script>
+    <script src="/js/user-create.js"></script>
+{% endblock %}

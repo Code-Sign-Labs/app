@@ -1,0 +1,161 @@
+{% extends "app/template.twig" %}
+
+{% block page %}Product{% endblock %}
+
+{% block content %}
+    <main class="p-8">
+        <!-- Header -->
+        <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-xl bg-brand flex items-center justify-center text-white font-bold text-2xl">{{ product.name|slice(0,1)|upper }}</div>
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-xl font-bold text-gray-900">{{ product.name }}</h2>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium {% if product.status.value == "active" %}bg-green-50 text-green-700{% elseif product.status.value == "revoked" %}bg-yellow-50 text-yellow-700{% else %}bg-red-50 text-red-700{% endif %}">{{ product.status.value|upper }}</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1">{{ product.description }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/app/license-new?product={{ product.slug }}" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-brand bg-brand-light hover:bg-brand-light/80 border border-brand/20 rounded-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    New License
+                </a>
+                <a href="/app/products/{{ product.slug }}/edit" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Edit
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500">Total Licenses</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ product.licenses.count }}</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500">Active Licenses</p>
+                <p class="text-2xl font-bold text-green-600 mt-1">{{ active_licenses }}</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500">Total Activations</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ activations_count }}</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500">Current Version</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">v{{ product.version }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Product info -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Details -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Product Details</h3>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Id</p>
+                            <p class="text-sm font-mono text-gray-900 mt-1">{{ product.id }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Slug</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ product.slug }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Created</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ product.createdAt|date('M j, Y') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Updated</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ product.updatedAt|date('M j, Y') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</p>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                <span class="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{{ product.status.value|upper }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Version</p>
+                            <p class="text-sm text-gray-900 mt-1">v{{ product.version }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent licenses for this product -->
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-900">Recent Licenses</h3>
+                        <a href="/app/licenses?product={{ product.slug }}" class="text-xs font-medium text-brand hover:text-brand-hover transition">View all</a>
+                    </div>
+                    <table class="w-full">
+                        <thead>
+                        <tr class="border-b border-gray-100">
+                            <th class="text-left px-5 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wide">License Key</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Type</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Created At</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for license in licenses %}
+                                <tr class="hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/app/licenses/{{ license.id }}'">
+                                    <td class="px-5 py-3 text-sm font-mono text-gray-700">{{ license.key }}</td>
+                                    <td class="px-5 py-3 text-sm text-gray-500">{{ license.type.value|capitalize }}</td>
+                                    <td class="px-5 py-3"><span class="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{{ license.status.value|capitalize }}</span></td>
+                                    <td class="px-5 py-3 text-gray-500">{{ license.createdAt|date('Y-m-d H:i:s') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right: API & Webhooks -->
+            <div class="space-y-6">
+                <!-- Quick stats -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Activation Summary</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Total activations</span>
+                            <span class="text-sm font-semibold text-gray-900">{{ activations_count }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Avg per license</span>
+                            <span class="text-sm font-semibold text-gray-900">{% if activations_count == 0 or product.licenses.count == 0 %}0{% else %}{{ activations_count / product.licenses.count }}{% endif %}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Expired licenses</span>
+                            <span class="text-sm font-semibold text-red-600">{{ expired_licenses }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Suspended licenses</span>
+                            <span class="text-sm font-semibold text-yellow-600">{{ suspended_licenses }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Activity Timeline</h3>
+                    <div class="space-y-4">
+                        {% for log in logs %}
+                            <div class="flex gap-3">
+                                {% set type = log.event|split('.')|last %}
+                                <div class="w-2 h-2 rounded-full {% if type == "success"%}bg-green-500{% elseif type == "failure" %}bg-red-500{% else%}bg-gray-400{% endif%} mt-1.5 flex-shrink-0"></div>
+                                <div>
+                                    <p class="text-sm text-gray-700">{{ log.description }}</p>
+                                    <p class="text-xs text-gray-400">{{ log.createdAt|date("M j, Y · g:i A") }}</p>
+                                    <a {% if log.user %}href="/app/users/{{ log.user.id }}"{% endif %} class="text-xs text-gray-400 mt-0.5">{{ log.user ? log.user.email : "SYSTEM" }}</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}

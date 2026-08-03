@@ -1,0 +1,70 @@
+{% extends "app/template.twig" %}
+
+{% block page %}Users list{% endblock %}
+
+{% block content %}
+    <main class="p-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Users</h2>
+                <p class="text-sm text-gray-500 mt-1">Manage who has access to your CodeSign panel.</p>
+            </div>
+            <a href="/app/users-new" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand hover:bg-brand-hover rounded-lg transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                Add User
+            </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500">Total Users</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ users|length }}</p>
+            </div>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                {{ error }}
+            </div>
+        {% endif %}
+        {% if success %}
+            <div class="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+                {{ success }}
+            </div>
+        {% endif %}
+
+        <!-- Table -->
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <table class="w-full">
+                <thead>
+                <tr class="border-b border-gray-200 bg-gray-50/50">
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">User</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Id</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Created At</th>
+                    <th class="px-5 py-3"></th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for user in users %}
+                        <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="window.location.href='/app/users/{{ user.id }}'">
+                            <td class="px-5 py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-brand text-white flex items-center justify-center text-sm font-semibold">{{ user.name|slice(0,2)|upper }}</div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ user.name }}</p>
+                                        <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-5 py-3 text-sm text-gray-500 font-mono">{{ user.id }}</td>
+                            <td class="px-5 py-3 text-sm text-gray-500">{{ user.createdAt|date('M j, Y') }}</td>
+                            <td class="px-5 py-3 text-right"><svg class="w-4 h-4 text-gray-400 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a!1 1 0 110-2 1 1 0 010 2z"/></svg></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+{% endblock %}
