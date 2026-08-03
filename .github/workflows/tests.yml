@@ -48,6 +48,10 @@ jobs:
       - name: Install dependencies
         run: composer install --no-progress --no-interaction --prefer-dist
 
+      - name: Setup .env
+        run: |
+          cp .env.example .env
+
       - name: Run tests
         run: |
           composer run tests
