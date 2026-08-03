@@ -21,7 +21,8 @@
         "ramsey/uuid": "^4.9",
         "ext-gd": "*",
         "ext-curl": "*",
-        "php": "8.2.*"
+        "php": "8.2.*",
+        "symfony/cache": "^7.4.15"
     },
     "require-dev": {
         "symfony/debug-bundle": "^7.2",

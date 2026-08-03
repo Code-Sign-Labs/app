@@ -25,6 +25,8 @@ class TestsManager
         $files = scandir($directory);
         $tests = [];
 
+        if(!$files) return $tests;
+
         foreach ($files as $file) {
             if ($file === "." || $file === "..") {
                 continue;
