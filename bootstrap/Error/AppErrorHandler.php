@@ -131,8 +131,6 @@ class AppErrorHandler
      */
     protected function constructErrorObject(Throwable $exception): ErrorObject
     {
-        var_dump($exception->getMessage());
-        var_dump($exception->getTraceAsString());
         $requestUri = $_SERVER['REQUEST_URI'] ?? '';
         $method = $_SERVER['REQUEST_METHOD'] ?? '';
         $headers = $this->getHeaders();
