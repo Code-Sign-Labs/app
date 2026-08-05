@@ -13,6 +13,7 @@ use Framework\Core\EventManager;
 use Framework\Kernel\KernelEventSubscriberInterface;
 use Framework\Kernel\KernelOptions;
 use Framework\Utils\DoctrineUuidType;
+use Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonContains;
 
 class OrmSubscriber implements KernelEventSubscriberInterface
 {
@@ -34,8 +35,11 @@ class OrmSubscriber implements KernelEventSubscriberInterface
 
             $config = ORMSetup::createAttributeMetadataConfiguration(
                 paths: [$namespaceConfig->get('namespace.entity.path')],
-                isDevMode: true
+                isDevMode: true,
             );
+
+            $config->addCustomStringFunction(JsonContains::FUNCTION_NAME, JsonContains::class);
+
 
             $connection = DriverManager::getConnection($ormConfig->get('orm.connection'), $config);
             $entityManager = new EntityManager($connection, $config);

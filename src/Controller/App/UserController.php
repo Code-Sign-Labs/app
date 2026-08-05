@@ -4,6 +4,7 @@ namespace App\Controller\App;
 
 use App\Controller\CoreAbstractController;
 use App\Entity\User;
+use App\Enum\EventNameEnum;
 use App\Service\ConfigService;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
@@ -106,8 +107,32 @@ class UserController extends CoreAbstractController
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
             ], "User with id {$userTarget->getId()} has been deleted.", $user);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::USER_DELETE_SUCCESS,
+                [
+                    "targetId" => $userTarget->getId(),
+                    "targetEmail" => $user->getEmail(),
+                    "authorId" => $user->getId(),
+                    "authorEmail" => $user->getEmail(),
+                    "userAgent" => $request->getHeader("User-Agent"),
+                    "ip" => $request->getUserIp()
+                ]
+            );
         } catch (Throwable $e) {
             $this->setFlash($request, "user.list.error", "Something went wrong: " . $e->getMessage());
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::USER_DELETE_FAILURE,
+                [
+                    "targetId" => $userTarget->getId(),
+                    "targetEmail" => $user->getEmail(),
+                    "authorId" => $user->getId(),
+                    "authorEmail" => $user->getEmail(),
+                    "userAgent" => $request->getHeader("User-Agent"),
+                    "ip" => $request->getUserIp()
+                ]
+            );
 
             $this->auditLogService->log("users.delete.failure", [
                 'user_agent' => $request->getHeader("User-Agent"),
@@ -230,6 +255,18 @@ class UserController extends CoreAbstractController
                 'ip' => $request->getUserIp()
             ], "User with id {$userTarget->getId()} has been edited.", $user);
 
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::USER_EDIT_SUCCESS,
+                [
+                    "targetId" => $userTarget->getId(),
+                    "targetEmail" => $userTarget->getEmail(),
+                    "authorId" => $user->getId(),
+                    "authorEmail" => $user->getEmail(),
+                    "userAgent" => $request->getHeader("User-Agent"),
+                    "ip" => $request->getUserIp()
+                ]
+            );
+
             return $this->redirect("/app/users");
         } catch (Throwable $e) {
             $this->setFlash($request, "user.list.error", "Something went wrong: " . $e->getMessage());
@@ -238,6 +275,18 @@ class UserController extends CoreAbstractController
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
             ], "User with id {$user->getId()} could not be edited.", $user);
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::USER_EDIT_FAILURE,
+                [
+                    "error" => $e->getMessage(),
+                    "targetId" => $userTarget->getId(),
+                    "targetEmail" => $userTarget->getEmail(),
+                    "authorId" => $user->getId(),
+                    "authorEmail" => $user->getEmail(),
+                    "userAgent" => $request->getHeader("User-Agent"),
+                    "ip" => $request->getUserIp()
+                ]
+            );
             return $this->redirect("/app/users/" . $user->getId() . "/edit");
         }
     }
@@ -317,9 +366,34 @@ class UserController extends CoreAbstractController
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
             ], "User with id {$userTarget->getId()} has been created.", $user);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::USER_CREATE_SUCCESS,
+                [
+                    "newUserId" => $userTarget->getId(),
+                    "newUserEmail" => $userTarget->getEmail(),
+                    "authorId" => $user->getId(),
+                    "authorEmail" => $user->getEmail(),
+                    "userAgent" => $request->getHeader("User-Agent"),
+                    "ip" => $request->getUserIp()
+                ]
+            );
+
             return $this->redirect("/app/users");
         } catch (Throwable $e) {
             $this->setFlash($request, "user.create.error", "Something went wrong: " . $e->getMessage());
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::USER_CREATE_FAILURE,
+                [
+                    "newUserId" => $userTarget->getId(),
+                    "newUserEmail" => $userTarget->getEmail(),
+                    "authorId" => $user->getId(),
+                    "authorEmail" => $user->getEmail(),
+                    "userAgent" => $request->getHeader("User-Agent"),
+                    "ip" => $request->getUserIp()
+                ]
+            );
 
             $this->auditLogService->log("users.create.failure", [
                 'user_agent' => $request->getHeader("User-Agent"),

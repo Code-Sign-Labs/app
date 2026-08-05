@@ -42,4 +42,14 @@ if [ -f /var/www/html/bin/kernel ] && [ "${RUN_MIGRATIONS:-true}" = "true" ]; th
     fi
 fi
 
+# CRON
+if command -v crond > /dev/null 2>&1; then
+    echo "Starting crond..."
+    crond -b -l 2
+    (
+      echo "* * * * * cd /var/www/html && /usr/local/bin/php bin/kernel app:cron >> /var/log/cron.log 2>&1"
+      echo "* * * * * sleep 30; cd /var/www/html && /usr/local/bin/php bin/kernel app:cron >> /var/log/cron.log 2>&1"
+    ) | crontab -
+fi
+
 exec docker-php-entrypoint "$@"

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Service\AuditLogService;
+use App\Service\EventBusService;
 use Doctrine\ORM\EntityManager;
 use Framework\Http\AbstractController;
 use Framework\Http\Objects\Request;
@@ -11,10 +12,12 @@ use Framework\Http\ViewEngine\ViewEngineInterface;
 class CoreAbstractController extends AbstractController
 {
     public AuditLogService $auditLogService;
+    public EventBusService $eventBusService;
     public function __construct(ViewEngineInterface $viewEngine, public EntityManager $entityManager)
     {
         parent::__construct($viewEngine);
         $this->auditLogService = new AuditLogService($this->entityManager);
+        $this->eventBusService = new EventBusService($this->entityManager);
     }
 
     public function getFlash(Request $request, string $key): mixed

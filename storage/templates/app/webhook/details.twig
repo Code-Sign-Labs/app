@@ -1,0 +1,169 @@
+{% extends "app/template.twig" %}
+
+{% block page %}Webhook Details{% endblock %}
+
+{% block content %}
+    <main class="p-8">
+        <!-- Header -->
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-brand-light flex items-center justify-center">
+                        <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-xl font-bold text-gray-900">{{ webhook.name }}</h2>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">{{ webhook.events|length }} event{{ webhook.events|length > 1 ? 's' : '' }} subscribed</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-items-center gap-2">
+                <a href="/app/webhooks/{{ webhook.id }}/delete" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Delete
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500">Total Deliveries</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ webhook.webhookDeliveries|length }}</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500">Success Rate</p>
+                <p class="text-2xl font-bold text-green-600 mt-1">{{ success_rate }}%</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500">Failed (24h)</p>
+                <p class="text-2xl font-bold text-red-600 mt-1">{{ fail_24h }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Details -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Webhook Info -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Webhook Information</h3>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Webhook ID</p>
+                            <p class="text-sm font-mono text-gray-900 mt-1">{{ webhook.id }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Name</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ webhook.name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Endpoint URL</p>
+                            <p class="text-sm font-mono text-gray-900 mt-1 break-all">{{ webhook.url }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ webhook.type.value|replace({"_": " "})|capitalize }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Created At</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ webhook.createdAt|date("M j, Y, g:i A") }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Delivery At</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ webhook.lastDeliveryAt ? webhook.lastDeliveryAt|date("M j, Y, g:i A") : "Never" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Subscribed Events</h3>
+                    <div class="space-y-2">
+                        {% for event in webhook.events %}
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ event }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Custom Headers -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Custom Headers</h3>
+                    <div class="space-y-2">
+                        {% for headerKey, headerValue in webhook.headers %}
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <span class="text-xs font-mono text-gray-500 w-40">{{ headerKey }}</span>
+                                <span class="text-gray-300">:</span>
+                                <span class="text-xs font-mono text-gray-700">{{ headerValue }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Custom Payload -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Custom Payload Template</h3>
+                    <pre class="text-xs font-mono text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-x-auto">{{ webhook.customPayload|json_encode }}</pre>
+                </div>
+            </div>
+
+            <!-- Right: Delivery History -->
+            <div class="space-y-6">
+                <!-- Recent Deliveries -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Recent Deliveries</h3>
+                    <div class="space-y-3">
+                        {% for delivery in webhookDeliveries %}
+                            <div class="flex gap-3">
+                                <div class="w-2 h-2 rounded-full bg-{% if delivery.status.value == 'success' %}green{% elseif delivery.status.value == "error" %}red{% else %}gray{% endif %}-500 mt-1.5 flex-shrink-0"></div>
+                                <div class="min-w-0">
+                                    <p class="text-sm text-gray-700 truncate">{{ delivery.eventName.value }}</p>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        {% if delivery.status.value == "success" %}
+                                            <span class="text-xs text-green-600 font-medium">Success</span>
+                                        {% elseif delivery.status.value == "error" %}
+                                            <span class="text-xs text-red-600 font-medium">{{ delivery.error|shorten(30) }}</span>
+                                        {% else %}
+                                            <span class="text-xs text-gray-600 font-medium">Pending</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-0.5">{{ time_ago(delivery.createdAt) }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Signing Secret -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Signing Secret</h3>
+                    <div class="flex items-center gap-2">
+                        <code data-value="{{ webhook.secret }}" id="secret" class="flex-1 text-xs font-mono text-gray-700 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">{{ webhook.secret|shorten(5) }}</code>
+                        <button type="button" id="copySecretBtn" class="p-2 text-gray-400 hover:text-gray-600 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Used to verify webhook authenticity. Each request is signed with HMAC-SHA256.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        const copySecretBtn = document.getElementById("copySecretBtn");
+        const secret = document.getElementById("secret");
+        copySecretBtn.addEventListener("click", () => {
+            const secretValue = secret.getAttribute("data-value");
+            navigator.clipboard.writeText(secretValue);
+        })
+    </script>
+{% endblock %}
