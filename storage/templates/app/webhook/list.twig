@@ -1,0 +1,110 @@
+{% extends "app/template.twig" %}
+
+{% block page %}Webhooks{% endblock %}
+
+{% block content %}
+    <main class="p-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Webhooks</h2>
+                <p class="text-sm text-gray-500 mt-1">Configure HTTP endpoints to receive real-time event notifications.</p>
+            </div>
+            <a href="/app/webhooks-new" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand hover:bg-brand-hover rounded-lg transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                New Webhook
+            </a>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+                <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500">Total Webhooks</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ webhooks|length }}</p>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <table class="w-full">
+                <thead>
+                <tr class="border-b border-gray-200 bg-gray-50/50">
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Name</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">URL</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Type</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Events</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Last Delivery</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Created</th>
+                    <th class="px-5 py-3"></th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for webhook in webhooks %}
+                        <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="window.location.href='/app/webhooks/{{ webhook.id }}'">
+                            <td class="px-5 py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900">{{ webhook.name }}</span>
+                                </div>
+                            </td>
+                            <td class="px-5 py-3 text-sm text-gray-500 font-mono truncate max-w-xs">{{ webhook.url }}</td>
+                            <td class="px-5 py-3"><span class="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{{ webhook.type.value }}</span></td>
+                            <td class="px-5 py-3">
+                                {% for event in webhook.events %}
+                                    <span class="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{{ event }}</span>
+                                {% endfor %}
+                            </td>
+                            <td class="px-5 py-3 text-sm text-gray-500">{{ webhook.lastDeliveryAt ? time_ago(webhook.lastDeliveryAt) : "Never" }}</td>
+                            <td class="px-5 py-3 text-sm text-gray-500">{{ webhook.createdAt|date('M j, Y') }}</td>
+                            <td class="px-5 py-3 text-right"><svg class="w-4 h-4 text-gray-400 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div class="flex flex-col gap-3 px-5 py-3 border-t border-gray-200 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-500">
+                    {% if pagination.totalItems > 0 %}
+                        Showing {{ pagination.from }}-{{ pagination.to }} of {{ pagination.totalItems }} webhooks
+                    {% else %}
+                        No webhooks to show
+                    {% endif %}
+                </p>
+                {% if pagination.pages %}
+                    <div class="flex items-center gap-1">
+                        {% if pagination.previousUrl %}
+                            <a href="{{ pagination.previousUrl }}" class="px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">Previous</a>
+                        {% else %}
+                            <span class="px-3 py-1.5 text-sm font-medium text-gray-400 border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed">Previous</span>
+                        {% endif %}
+
+                        {% for page in pagination.pages %}
+                            {% if page.type == 'ellipsis' %}
+                                <span class="px-2 text-sm text-gray-400">...</span>
+                            {% elseif page.active %}
+                                <span class="px-3 py-1.5 text-sm font-medium text-white bg-brand border border-brand rounded-lg">{{ page.number }}</span>
+                            {% else %}
+                                <a href="{{ page.url }}" class="px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">{{ page.number }}</a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if pagination.nextUrl %}
+                            <a href="{{ pagination.nextUrl }}" class="px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">Next</a>
+                        {% else %}
+                            <span class="px-3 py-1.5 text-sm font-medium text-gray-400 border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed">Next</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+{% endblock %}

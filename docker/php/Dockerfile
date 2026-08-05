@@ -54,6 +54,13 @@ COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 RUN addgroup -g 1000 appgroup && \
     adduser -u 1000 -G appgroup -s /bin/sh -D appuser
 
+# CRON
+RUN apk add --no-cache busybox-suid \
+        && mkdir -p /var/spool/cron/crontabs \
+        && chmod 1777 /var/spool/cron/crontabs \
+        && touch /var/log/cron.log \
+        && chown -R appuser:appgroup /var/log/cron.log /var/spool/cron/crontabs
+
 WORKDIR /var/www/html
 
 RUN chown -R appuser:appgroup /var/www/html
@@ -63,8 +70,6 @@ RUN chown -R appuser:appgroup /var/www/html
 # ============================================
 COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
-
-USER appuser
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]

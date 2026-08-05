@@ -19,4 +19,5 @@ node_modules/
 dist/
 build/
 .changes.md
+.todo.md
 storage/.migrations_completed

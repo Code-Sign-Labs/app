@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Enum\EventNameEnum;
 use Doctrine\ORM\EntityManager;
 use Framework\Http\Objects\Request;
 use Framework\Http\Objects\Response;
@@ -63,9 +64,39 @@ class AuthenticationController extends CoreAbstractController
         }
 
         if(!password_verify($password, $user->getPassword())) {
+            $this->auditLogService->log("users.auth.failure", [
+                'user_agent' => $request->getHeader("User-Agent"),
+                'ip' => $request->getUserIp()
+            ], "Authorization failure for user {$user->getId()}", user: $user);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::USER_AUTH_FAILURE,
+                [
+                    'userId' => $user->getId(),
+                    'userEmail' => $user->getEmail(),
+                    'userAgent' => $request->getHeader("User-Agent"),
+                    'ip' => $request->getUserIp()
+                ]
+            );
+
             $this->setFlash($request, "auth.error", "Invalid email or password");
             return $this->redirect("/login");
         }
+
+        $this->eventBusService->triggerEvent(
+            EventNameEnum::USER_AUTH_SUCCESS,
+            [
+                'userId' => $user->getId(),
+                'userEmail' => $user->getEmail(),
+                'userAgent' => $request->getHeader("User-Agent"),
+                'ip' => $request->getUserIp()
+            ]
+        );
+
+        $this->auditLogService->log("users.auth.success", [
+            'user_agent' => $request->getHeader("User-Agent"),
+            'ip' => $request->getUserIp()
+        ], "Authorization success for user {$user->getId()}", user: $user);
 
         $request->session()->set("user_id", $user->getId());
 

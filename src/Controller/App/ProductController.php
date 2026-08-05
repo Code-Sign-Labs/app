@@ -5,6 +5,7 @@ namespace App\Controller\App;
 use App\Controller\CoreAbstractController;
 use App\Entity\LicenseKey;
 use App\Entity\Product;
+use App\Enum\EventNameEnum;
 use App\Enum\LicenseKeyStatusEnum;
 use App\Enum\ProductStatusEnum;
 use Doctrine\ORM\EntityManager;
@@ -98,12 +99,35 @@ class ProductController extends CoreAbstractController
                 'user_agent' => $request->getHeader('User-Agent'),
                 'ip' => $request->getUserIp()
             ], "Product with id {$product->getId()} has been created.", $user, product: $product);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::PRODUCT_CREATE_SUCCESS,
+                [
+                    "userAgent" => $request->getHeader('User-Agent'),
+                    "ip" => $request->getUserIp(),
+                    "productId" => $product->getId(),
+                    "productName" => $product->getName(),
+                    "author" => $user->getEmail()
+                ]
+            );
+
             return $this->redirect("/app/products");
         } catch (Throwable $e) {
             $this->auditLogService->log("products.create.failure", [
                 'user_agent' => $request->getHeader('User-Agent'),
                 'ip' => $request->getUserIp()
             ], "Product with name {$product->getName()} could not be created.", $user);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::PRODUCT_CREATE_FAILURE,
+                [
+                    "userAgent" => $request->getHeader('User-Agent'),
+                    "ip" => $request->getUserIp(),
+                    "productId" => $product->getId(),
+                    "productName" => $product->getName(),
+                    "author" => $user->getEmail()
+                ]
+            );
 
             $this->setFlash($request, "products.create.error", "Something went wrong: " . $e->getMessage());
             return $this->redirect("/app/products-new");
@@ -193,12 +217,34 @@ class ProductController extends CoreAbstractController
                 'ip' => $request->getUserIp()
             ], "Product with id {$product->getId()} has been updated.", $user, product: $product);
 
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::PRODUCT_EDIT_SUCCESS,
+                [
+                    "userAgent" => $request->getHeader('User-Agent'),
+                    "ip" => $request->getUserIp(),
+                    "productId" => $product->getId(),
+                    "productName" => $product->getName(),
+                    "author" => $user->getEmail()
+                ]
+            );
+
             return $this->redirect("/app/products/{$slug}");
         } catch (Throwable $e) {
             $this->auditLogService->log("products.edit.failure", [
                 'user_agent' => $request->getHeader('User-Agent'),
                 'ip' => $request->getUserIp()
             ], "Product with name {$product->getName()} could not be updated.", $user);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::PRODUCT_EDIT_FAILURE,
+                [
+                    "userAgent" => $request->getHeader('User-Agent'),
+                    "ip" => $request->getUserIp(),
+                    "productId" => $product->getId(),
+                    "productName" => $product->getName(),
+                    "author" => $user->getEmail()
+                ]
+            );
 
             $this->setFlash($request, "products.edit.error", "Something went wrong: " . $e->getMessage());
             return $this->redirect("/app/products/{$productSlug}/edit");

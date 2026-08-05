@@ -6,9 +6,11 @@ use App\Controller\CoreAbstractController;
 use App\Entity\Activation;
 use App\Entity\LicenseKey;
 use App\Entity\Product;
+use App\Enum\EventNameEnum;
 use App\Enum\LicenseKeyStatusEnum;
 use App\Enum\LicenseKeyTypeEnum;
 use App\Service\ConfigService;
+use App\Service\EventBusService;
 use DateTime;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
@@ -190,6 +192,14 @@ class LicenseController extends CoreAbstractController
             $this->entityManager->persist($licenseKey);
             $this->entityManager->flush();
 
+            $this->eventBusService->triggerEvent(EventNameEnum::LICENSE_CREATE_SUCCESS, [
+                "licenseKey" => $licenseKey->getKey(),
+                "productId" => $product->getId(),
+                "author" => $user->getEmail(),
+                "ip" => $request->getUserIp(),
+                "userAgent" => $request->getHeader("User-Agent"),
+            ]);
+
             $this->auditLogService->log("license.create.success", [
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
@@ -198,6 +208,13 @@ class LicenseController extends CoreAbstractController
             $this->setFlash($request, "license.list.success", "License key created successfully. License key: {$licenseKey->getKey()}");
             return $this->redirect("/app/licenses");
         } catch (Throwable $e) {
+            $this->eventBusService->triggerEvent(EventNameEnum::LICENSE_CREATE_FAILURE, [
+                "productId" => $product->getId(),
+                "author" => $user->getEmail(),
+                "ip" => $request->getUserIp(),
+                "userAgent" => $request->getHeader("User-Agent"),
+            ]);
+
             $this->auditLogService->log("license.create.failure", [
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
@@ -270,6 +287,16 @@ class LicenseController extends CoreAbstractController
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
             ], "License with id {$licenseId} has been {$action}", $user, $license);
+
+            $event = $action == "revoked" ? EventNameEnum::LICENSE_STATUS_REVOKE : EventNameEnum::LICENSE_STATUS_UNREVOKE;
+
+            $this->eventBusService->triggerEvent($event, [
+                'userAgent' => $request->getHeader("User-Agent"),
+                'ip' => $request->getUserIp(),
+                'licenseId' => $licenseId,
+                "authorId" => $user->getId(),
+                "authorEmail" => $user->getEmail(),
+            ]);
         } catch (Throwable $e) {
             $this->auditLogService->log("license.revoke.failure", [
                 'user_agent' => $request->getHeader("User-Agent"),
@@ -310,6 +337,16 @@ class LicenseController extends CoreAbstractController
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
             ], "License with id {$licenseId} has been {$action}", $user, $license);
+
+            $event = $action === "suspended" ? EventNameEnum::LICENSE_STATUS_SUSPEND : EventNameEnum::LICENSE_STATUS_UNSUSPEND;
+
+            $this->eventBusService->triggerEvent($event, [
+                'userAgent' => $request->getHeader("User-Agent"),
+                'ip' => $request->getUserIp(),
+                'licenseId' => $licenseId,
+                "authorId" => $user->getId(),
+                "authorEmail" => $user->getEmail(),
+            ]);
         } catch (Throwable $e) {
             $this->auditLogService->log("license.suspend.failure", [
                 'user_agent' => $request->getHeader("User-Agent"),

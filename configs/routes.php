@@ -5,6 +5,7 @@ use App\Controller\App\LicenseController;
 use App\Controller\App\ProductController;
 use App\Controller\App\SettingsController;
 use App\Controller\App\UserController;
+use App\Controller\App\WebhookController;
 use App\Controller\AuthenticationController;
 use App\Controller\NotFoundController;
 use App\Firewall\IsLoggedFirewall;
@@ -32,6 +33,12 @@ $routeTable->addRoute("/app/products-new", "POST", ProductController::class . "@
 $routeTable->addRoute("/app/products/<productSlug>/edit", "GET", ProductController::class . "@indexEdit", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/products/<productSlug>/edit", "POST", ProductController::class . "@edit", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/products/<productSlug>", "GET", ProductController::class . "@details", firewall: IsLoggedFirewall::class);
+
+$routeTable->addRoute("/app/webhooks", "GET", WebhookController::class . "@index", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/webhooks-new", "GET", WebhookController::class . "@indexCreate", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/webhooks-new", "POST", WebhookController::class . "@create", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/webhooks/<webhookId>", "GET", WebhookController::class . "@details", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/webhooks/<webhookId>/delete", "GET", WebhookController::class . "@delete", firewall: IsLoggedFirewall::class);
 
 $routeTable->addRoute("/app/users", "GET", UserController::class . "@list", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/users-new", "GET", UserController::class . "@createIndex", firewall: IsLoggedFirewall::class);

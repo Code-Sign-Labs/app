@@ -4,6 +4,7 @@ namespace App\Controller\App;
 
 use App\Controller\CoreAbstractController;
 use App\Entity\Config;
+use App\Enum\EventNameEnum;
 use App\Service\ConfigService;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
@@ -180,7 +181,25 @@ class SettingsController extends CoreAbstractController
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
             ], "Settings has been successfully updated.", user: $user);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::SETTINGS_UPDATE_SUCCESS,
+                [
+                    'user_agent' => $request->getHeader("User-Agent"),
+                    'ip' => $request->getUserIp(),
+                    "author" => $user->getEmail()
+                ]
+            );
         } catch (\Throwable $e) {
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::SETTINGS_UPDATE_FAILURE,
+                [
+                    'user_agent' => $request->getHeader("User-Agent"),
+                    'ip' => $request->getUserIp(),
+                    "author" => $user->getEmail()
+                ]
+            );
+
             $this->auditLogService->log("settings.update.error", [
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
