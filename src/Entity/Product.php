@@ -212,4 +212,12 @@ class Product
         $this->licenses = $licenses;
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return "pr_" . $this->id . "_" . $this->version;
+    }
 }

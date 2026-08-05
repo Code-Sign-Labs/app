@@ -146,4 +146,12 @@ class User
         $this->auditLogs = $auditLogs;
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return "usr_" . $this->id . "_" . $this->name;
+    }
 }

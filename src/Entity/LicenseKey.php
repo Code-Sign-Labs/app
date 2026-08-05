@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
 use Doctrine\ORM\Mapping\Id;
+use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\Mapping\OneToMany;
 use Doctrine\ORM\Mapping\Table;
@@ -22,10 +23,12 @@ class LicenseKey
     #[Column(type: 'uuid_binary')]
     protected string $id;
 
-    #[ManyToOne(targetEntity: Product::class, inversedBy: "licenseKeys")]
+    #[ManyToOne(targetEntity: Product::class, cascade: ["persist"], inversedBy: "licenseKeys")]
+    #[JoinColumn(onDelete: "CASCADE")]
     protected Product $product;
 
-    #[ManyToOne(targetEntity: Batch::class, inversedBy: "licenseKeys")]
+    #[ManyToOne(targetEntity: Batch::class, cascade: ["persist"], inversedBy: "licenseKeys")]
+    #[JoinColumn(onDelete: "CASCADE")]
     protected ?Batch $batch = null;
 
     #[Column(name: "license_key", type: 'string', length: 255, unique: true)]
@@ -297,5 +300,13 @@ class LicenseKey
     {
         $this->activations = $activations;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return "lk_" . $this->id . "_" . $this->key;
     }
 }
