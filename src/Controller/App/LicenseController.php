@@ -233,6 +233,7 @@ class LicenseController extends CoreAbstractController
     {
         $licenseId = $request->getParams()['licenseId'];
         $user = $request->getAttributes()['user'];
+        $error = $this->getFlash($request, "licenses.details.error");
 
         $licenseRepository = $this->entityManager->getRepository(LicenseKey::class);
         $license = $licenseRepository->findOneBy([
@@ -253,7 +254,8 @@ class LicenseController extends CoreAbstractController
             'user' => $user,
             'license' => $license,
             'logs' => $this->auditLogService->getLicenseKeyLogs($license),
-            'activations' => $activations
+            'activations' => $activations,
+            'error' => $error,
         ]);
     }
 
@@ -354,6 +356,52 @@ class LicenseController extends CoreAbstractController
             ], "License with id {$licenseId} could not be {$action}", $user, $license);
         }
         return $this->redirect("/app/licenses/{$licenseId}");
+    }
+
+    public function delete(Request $request): Response
+    {
+        $user = $request->getAttributes()['user'];
+        $licenseId = $request->getParams()['licenseId'];
+
+        $licenseRepository = $this->entityManager->getRepository(LicenseKey::class);
+        $license = $licenseRepository->findOneBy([
+            'id' => $licenseId
+        ]);
+        if(!$license) return $this->redirect("/app/licenses");
+
+        try {
+            $this->entityManager->remove($license);
+            $this->entityManager->flush();
+
+            $this->auditLogService->log("license.delete.success", [
+                'user_agent' => $request->getHeader("User-Agent"),
+                'ip' => $request->getUserIp()
+            ], "License with id {$licenseId} has been deleted", $user);
+
+            $this->eventBusService->triggerEvent(EventNameEnum::LICENSE_DELETE_SUCCESS, [
+                'userAgent' => $request->getHeader("User-Agent"),
+                'ip' => $request->getUserIp(),
+                'licenseId' => $licenseId,
+                "authorId" => $user->getId(),
+                "authorEmail" => $user->getEmail(),
+            ]);
+        } catch (Throwable $e) {
+            $this->auditLogService->log("license.delete.failure", [
+                'user_agent' => $request->getHeader("User-Agent"),
+                'ip' => $request->getUserIp()
+            ], "License with id {$licenseId} could not be deleted", $user);
+
+            $this->eventBusService->triggerEvent(EventNameEnum::LICENSE_DELETE_FAILURE, [
+                'userAgent' => $request->getHeader("User-Agent"),
+                'ip' => $request->getUserIp(),
+                'licenseId' => $licenseId,
+                "authorId" => $user->getId(),
+                "authorEmail" => $user->getEmail(),
+            ]);
+
+            $this->setFlash($request, "licenses.details.error", "Something went wrong: " . $e->getMessage());
+        }
+        return $this->redirect("/app/licenses");
     }
 
     /**

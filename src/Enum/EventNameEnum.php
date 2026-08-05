@@ -14,8 +14,8 @@ enum EventNameEnum: string
     case USER_CREATE_FAILURE = 'user.create.failure'; // done
     case LICENSE_CREATE_SUCCESS = 'license.create.success'; // done
     case LICENSE_CREATE_FAILURE = 'license.create.failure'; // done
-    case LICENSE_DELETE_SUCCESS = "license.delete.success"; // TODO: Add trigger after implementing license deletion
-    case LICENSE_DELETE_FAILURE = "license.delete.failure"; // TODO: Add trigger after implementing license deletion
+    case LICENSE_DELETE_SUCCESS = "license.delete.success"; // done
+    case LICENSE_DELETE_FAILURE = "license.delete.failure"; // done
     case LICENSE_STATUS_SUSPEND = 'license.status.suspend'; // done
     case LICENSE_STATUS_UNSUSPEND = 'license.status.unsuspend'; // done
     case LICENSE_STATUS_REVOKE = 'license.status.revoke'; // done
@@ -29,10 +29,10 @@ enum EventNameEnum: string
     case PRODUCT_CREATE_FAILURE = 'product.create.failure'; // done
     case PRODUCT_EDIT_SUCCESS = 'product.edit.success'; // done
     case PRODUCT_EDIT_FAILURE = 'product.edit.failure'; // done
-    case PRODUCT_DELETE_SUCCESS = 'product.delete.success'; // TODO: Add trigger after implementing product deletion
-    case PRODUCT_DELETE_FAILURE = 'product.delete.failure'; // TODO: Add trigger after implementing product deletion
-    case PRODUCT_ARCHIVE_SUCCESS = 'product.archive.success'; // TODO: Add trigger after implementing product archiving
-    case PRODUCT_ARCHIVE_FAILURE = 'product.archive.failure'; // TODO: Add trigger after implementing product archiving
+    case PRODUCT_DELETE_SUCCESS = 'product.delete.success'; // done
+    case PRODUCT_DELETE_FAILURE = 'product.delete.failure'; // done
+    case PRODUCT_ARCHIVE_SUCCESS = 'product.archive.success'; // done
+    case PRODUCT_ARCHIVE_FAILURE = 'product.archive.failure'; // done
     case SETTINGS_UPDATE_SUCCESS = 'settings.update.success'; // done
     case SETTINGS_UPDATE_FAILURE = 'settings.update.failure'; // done
     case WEBHOOK_CREATE_SUCCESS = 'webhook.create.success'; // done

@@ -6,6 +6,7 @@ use DateTime;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
 use Doctrine\ORM\Mapping\Id;
+use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\Mapping\Table;
 use Ramsey\Uuid\Uuid;
@@ -22,12 +23,15 @@ class AuditLog
     protected string $event;
 
     #[ManyToOne(targetEntity: User::class, inversedBy: "audit_logs")]
+    #[JoinColumn(onDelete: "SET NULL")]
     protected ?User $user;
 
     #[ManyToOne(targetEntity: LicenseKey::class, inversedBy: "audit_logs")]
+    #[JoinColumn(onDelete: "SET NULL")]
     protected ?LicenseKey $licenseKey;
 
     #[ManyToOne(targetEntity: Product::class, inversedBy: "audit_logs")]
+    #[JoinColumn(onDelete: "SET NULL")]
     protected ?Product $product;
 
     #[Column(name: "description", type: "text")]

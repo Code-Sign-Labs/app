@@ -259,6 +259,7 @@ class ProductController extends CoreAbstractController
     {
         $productSlug = $request->getParams()['productSlug'];
         $user = $request->getAttributes()['user'];
+        $error = $this->getflash($request, "products.details.error");
 
         $productsRepository = $this->entityManager->getRepository(Product::class);
         $product = $productsRepository->findOneBy([
@@ -295,6 +296,132 @@ class ProductController extends CoreAbstractController
             })->count(),
             'licenses' => $licenses,
             'logs' => $this->auditLogService->getProductLogs($product),
+            'error' => $error
         ]);
+    }
+
+    /***
+     * @param Request $request
+     * @return Response
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function archive(Request $request): Response
+    {
+        $productSlug = $request->getParams()['productSlug'];
+        $user = $request->getAttributes()['user'];
+
+        $productsRepository = $this->entityManager->getRepository(Product::class);
+        $product = $productsRepository->findOneBy([
+            'slug' => $productSlug
+        ]);
+        if(!$product) return $this->redirect("/app/products");
+
+        $archived = false;
+        if($product->getStatus() === ProductStatusEnum::active) {
+            $product->setStatus(ProductStatusEnum::archived);
+            $archived = true;
+        } else {
+            $product->setStatus(ProductStatusEnum::active);
+        }
+
+        $text = $archived ? "archived" : "unarchived";
+
+        try {
+            $this->entityManager->persist($product);
+            $this->entityManager->flush();
+
+            $this->auditLogService->log("products.archive.success", [
+                'user_agent' => $request->getHeader('User-Agent'),
+                'ip' => $request->getUserIp()
+            ], "Product with id {$product->getId()} has been {$text}.", user: $user, product: $product);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::PRODUCT_ARCHIVE_SUCCESS,
+                [
+                    "userAgent" => $request->getHeader('User-Agent'),
+                    "ip" => $request->getUserIp(),
+                    "productId" => $product->getId(),
+                    "productName" => $product->getName(),
+                    "author" => $user->getEmail(),
+                    "archived" => $archived ? "True" : "False"
+                ]
+            );
+
+            return $this->redirect("/app/products/{$productSlug}");
+        } catch (Throwable $e) {
+            $this->auditLogService->log("products.archive.failure", [
+                'user_agent' => $request->getHeader('User-Agent'),
+                'ip' => $request->getUserIp()
+            ], "Product with name {$product->getName()} could not be {$text}.", $user, product: $product);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::PRODUCT_ARCHIVE_FAILURE,
+                [
+                    "userAgent" => $request->getHeader('User-Agent'),
+                    "ip" => $request->getUserIp(),
+                    "productId" => $product->getId(),
+                    "productName" => $product->getName(),
+                    "author" => $user->getEmail()
+                ]
+            );
+
+            $this->setFlash($request, "products.details.error", "Something went wrong: " . $e->getMessage());
+            return $this->redirect("/app/products/{$productSlug}");
+        }
+    }
+
+    public function delete(Request $request): Response
+    {
+        $productSlug = $request->getParams()['productSlug'];
+        $user = $request->getAttributes()['user'];
+
+        $productsRepository = $this->entityManager->getRepository(Product::class);
+        $product = $productsRepository->findOneBy([
+            'slug' => $productSlug
+        ]);
+        if(!$product) return $this->redirect("/app/products");
+
+        try {
+            $this->auditLogService->log("products.delete.success", [
+                'user_agent' => $request->getHeader('User-Agent'),
+                'ip' => $request->getUserIp()
+            ], "Product with id {$product->getId()} has been deleted.", user: $user);
+
+            $this->entityManager->remove($product);
+            $this->entityManager->flush();
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::PRODUCT_DELETE_SUCCESS,
+                [
+                    "userAgent" => $request->getHeader('User-Agent'),
+                    "ip" => $request->getUserIp(),
+                    "productId" => $product->getId(),
+                    "productName" => $product->getName(),
+                    "author" => $user->getEmail()
+                ]
+            );
+
+            return $this->redirect("/app/products");
+        } catch (Throwable $e) {
+            $this->auditLogService->log("products.delete.failure", [
+                'user_agent' => $request->getHeader('User-Agent'),
+                'ip' => $request->getUserIp()
+            ], "Product with name {$product->getName()} could not be deleted.", $user, product: $product);
+
+            $this->eventBusService->triggerEvent(
+                EventNameEnum::PRODUCT_DELETE_FAILURE,
+                [
+                    "userAgent" => $request->getHeader('User-Agent'),
+                    "ip" => $request->getUserIp(),
+                    "productId" => $product->getId(),
+                    "productName" => $product->getName(),
+                    "author" => $user->getEmail()
+                ]
+            );
+
+            $this->setFlash($request, "products.details.error", "Something went wrong: " . $e->getMessage());
+            return $this->redirect("/app/products/{$productSlug}");
+        }
     }
 }

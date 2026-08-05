@@ -22,8 +22,30 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     {{ license.status.value == "revoked" ? "Unrevoke" : "Revoke" }}
                 </a>
+                <a href="/app/licenses/{{ license.id }}/delete" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-brand bg-brand-light hover:bg-brand-light/80 border border-brand/20 rounded-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M8.56 3.69a9 9 0 0 0 -2.92 1.95" />
+                        <path d="M3.69 8.56a9 9 0 0 0 -.69 3.44" />
+                        <path d="M3.69 15.44a9 9 0 0 0 1.95 2.92" />
+                        <path d="M8.56 20.31a9 9 0 0 0 3.44 .69" />
+                        <path d="M15.44 20.31a9 9 0 0 0 2.92 -1.95" />
+                        <path d="M20.31 15.44a9 9 0 0 0 .69 -3.44" />
+                        <path d="M20.31 8.56a9 9 0 0 0 -1.95 -2.92" />
+                        <path d="M15.44 3.69a9 9 0 0 0 -3.44 -.69" />
+                        <path d="M14 14l-4 -4" />
+                        <path d="M10 14l4 -4" />
+                    </svg>
+                    Delete
+                </a>
             </div>
         </div>
+
+        {% if error %}
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {{ error }}
+            </div>
+        {% endif %}
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Left: Details -->
