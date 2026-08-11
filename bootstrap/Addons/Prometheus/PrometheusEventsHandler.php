@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace Framework\Addons\Prometheus;
 
 use Framework\Addons\Prometheus\Handlers\PrometheusRequestCompletedHandler;

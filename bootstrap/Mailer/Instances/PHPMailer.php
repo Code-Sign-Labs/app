@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace Framework\Mailer\Instances;
 
 use Framework\Http\ViewEngine\ViewEngineInterface;

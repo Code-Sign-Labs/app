@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace Tests\Core\Events;
 
 use Framework\Configs\ConfigCore;

@@ -4,6 +4,7 @@
   "kernel.configure_debug": "Kernel step: bind debugbar/debug renderer into container.",
   "kernel.configure_view_engine": "Kernel step: configure view engine and bind ViewEngineInterface.",
   "kernel.configure_orm": "Kernel step: configure ORM and bind Doctrine EntityManager/Connection.",
+  "kernel.configure_redis": "Kernel step: configure Redis and bind Redis client into container.",
   "kernel.configure_addons": "Kernel step: initialize addons and register addon event handlers.",
   "kernel.configure_router": "Kernel step: create Router and attach addon routes.",
   "kernel.handle_request": "Kernel step: handle current request via Router (emits request.* events).",

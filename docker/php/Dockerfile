@@ -2,6 +2,7 @@ FROM php:8.2-fpm-alpine
 
 LABEL maintainer="CodeSign"
 LABEL description="PHP 8.2-FPM for CodeSign"
+
 # GD + YAML + BZ2 + ZIP + ICU + MBSTRING + XML dependencies
 RUN apk add --no-cache \
     libpng-dev \
@@ -41,9 +42,10 @@ RUN docker-php-ext-configure gd \
         opcache \
         bz2
 
-# YAML via PECL
-RUN pecl install yaml \
-    && docker-php-ext-enable yaml
+# PECL extensions (YAML & Redis)
+RUN pecl install yaml redis \
+    && docker-php-ext-enable yaml redis \
+    && apk del $PHPIZE_DEPS
 
 RUN apk add --no-cache mysql-client
 

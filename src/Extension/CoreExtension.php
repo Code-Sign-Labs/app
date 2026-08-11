@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace App\Extension;
 
 use Twig\Extension\AbstractExtension;
@@ -8,8 +8,12 @@ use Twig\TwigFunction;
 
 class CoreExtension extends AbstractExtension
 {
-    public const DOMAIN      = 'example.com';
-    public const DASH_DOMAIN = 'dashboard.example.com';
+    public string $DOMAIN = '';
+
+    public function __construct()
+    {
+        $this->DOMAIN = $_ENV["APP_URL"];
+    }
 
     public function getFunctions(): array
     {
@@ -17,13 +21,7 @@ class CoreExtension extends AbstractExtension
             new TwigFunction(
                 'domain',
                 function (): string {
-                    return self::DOMAIN;
-                }
-            ),
-            new TwigFunction(
-                'domainDashboard',
-                function (): string {
-                    return 'https://' . self::DASH_DOMAIN;
+                    return $this->DOMAIN;
                 }
             ),
             new TwigFunction(
@@ -43,19 +41,6 @@ class CoreExtension extends AbstractExtension
                     return file_get_contents(__DIR__ . "/../../VERSION");
                 }
             )
-        ];
-    }
-
-    public function getFilters(): array
-    {
-        return [
-            new TwigFilter('short_string', function ($string, $length = 10) {
-                if (strlen($string) <= $length) {
-                    return $string;
-                }
-
-                return substr($string, 0, $length) . '...';
-            }),
         ];
     }
 }

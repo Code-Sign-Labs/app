@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace Framework\Kernel;
 
 final class KernelEvents
@@ -12,6 +12,7 @@ final class KernelEvents
     public const CONFIGURE_ORM = 'kernel.configure_orm';
     public const CONFIGURE_ADDONS = 'kernel.configure_addons';
     public const CONFIGURE_ROUTER = 'kernel.configure_router';
+    public const CONFIGURE_REDIS = 'kernel.configure_redis';
 
     public const HANDLE_REQUEST = 'kernel.handle_request';
     public const HANDLE_TESTS = 'kernel.handle_tests';

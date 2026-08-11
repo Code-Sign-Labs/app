@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace Framework\Kernel\Subscribers;
 
 use Framework\Configs\ConfigCore;
@@ -48,6 +48,7 @@ class ErrorHandlingSubscriber implements KernelEventSubscriberInterface
             });
 
             set_error_handler(function (...$args) use ($appErrorHandler) {
+                var_dump($args);
                 $appErrorHandler->handleError(...$args);
             });
         });

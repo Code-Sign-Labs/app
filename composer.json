@@ -31,7 +31,8 @@
         "ext-curl": "*",
         "php": "8.2.*",
         "symfony/cache": "^7.4.15",
-        "scienta/doctrine-json-functions": "^6.5.0"
+        "scienta/doctrine-json-functions": "^6.5.0",
+        "ext-redis": "*"
     },
     "require-dev": {
         "symfony/debug-bundle": "^7.2",

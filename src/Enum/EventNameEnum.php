@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace App\Enum;
 
 enum EventNameEnum: string
@@ -20,11 +20,12 @@ enum EventNameEnum: string
     case LICENSE_STATUS_UNSUSPEND = 'license.status.unsuspend'; // done
     case LICENSE_STATUS_REVOKE = 'license.status.revoke'; // done
     case LICENSE_STATUS_UNREVOKE = 'license.status.unrevoke'; // done
-    case LICENSE_ACTIVATION_SUCCESS = 'license.activation.success'; // TODO: Add trigger after implementing API
-    case LICENSE_ACTIVATION_FAILURE = 'license.activation.failure'; // TODO: Add trigger after implementing API
-    case LICENSE_ACTIVATION_REMOVE = 'license.activation.remove'; // TODO: Add trigger after implementing API
-    case LICENSE_AUTHORIZATION_SUCCESS = 'license.authorization.success'; // TODO: Add trigger after implementing API
-    case LICENSE_AUTHORIZATION_FAILURE = "license.authorization.failure"; // TODO: Add trigger after implementing API
+    case LICENSE_ACTIVATION_SUCCESS = 'license.activation.success'; // done
+    case LICENSE_ACTIVATION_FAILURE = 'license.activation.failure'; // done
+    case LICENSE_ACTIVATION_REMOVE_SUCCESS = 'license.activation.remove.success'; // done
+    case LICENSE_ACTIVATION_REMOVE_FAILURE = 'license.activation.remove.failure'; // done
+    case LICENSE_AUTHORIZATION_SUCCESS = 'license.authorization.success'; // done
+    case LICENSE_AUTHORIZATION_FAILURE = "license.authorization.failure"; // done
     case PRODUCT_CREATE_SUCCESS = 'product.create.success'; // done
     case PRODUCT_CREATE_FAILURE = 'product.create.failure'; // done
     case PRODUCT_EDIT_SUCCESS = 'product.edit.success'; // done

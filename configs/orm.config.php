@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 use Framework\Configs\Config;
 
 $config = new Config();
