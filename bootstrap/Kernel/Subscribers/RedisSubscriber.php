@@ -21,6 +21,8 @@ class RedisSubscriber implements KernelEventSubscriberInterface
     public function subscribe(EventManager $eventManager): void
     {
         $eventManager->registerEvent(KernelEvents::CONFIGURE_REDIS, function (array $data) {
+            if(!$_ENV["REDIS_HOST"] || !$_ENV["REDIS_PORT"]) return;
+
             $redis = new Redis();
             $redis->connect($_ENV['REDIS_HOST'], (int) $_ENV['REDIS_PORT']);
             if(isset($_ENV['REDIS_DB'])){
