@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
-use App\Controller\API\LicenseApiController;
+
+use App\Controller\API\v1\CertificateController;
+use App\Controller\API\v1\LicenseApiController;
+use App\Controller\App\CertificatesController;
 use App\Controller\App\HomeController;
 use App\Controller\App\LicenseController;
 use App\Controller\App\ProductController;
@@ -56,12 +59,18 @@ $routeTable->addRoute("/app/users/<userId>/edit", "POST", UserController::class 
 $routeTable->addRoute("/app/settings", "GET", SettingsController::class . "@index", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/settings", "POST", SettingsController::class . "@update", firewall: IsLoggedFirewall::class);
 
+$routeTable->addRoute("/app/certs", "GET", CertificatesController::class . "@index", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/certs", "POST", CertificatesController::class . "@rotate", firewall: IsLoggedFirewall::class);
+
 // API
 
-$routeTable->addRoute("/api/licenses/<license_key>", "GET", LicenseApiController::class . "@validate", firewall: RateLimiterFirewall::class);
-$routeTable->addRoute("/api/licenses/<license_key>/devices", "GET", LicenseApiController::class . "@devices", firewall: RateLimiterFirewall::class);
-$routeTable->addRoute("/api/licenses/<license_key>/activate", "POST", LicenseApiController::class . "@activate", firewall: RateLimiterFirewall::class);
-$routeTable->addRoute("/api/licenses/<license_key>/deactivate", "POST", LicenseApiController::class . "@deactivate", firewall: RateLimiterFirewall::class);
+$routeTable->addRoute("/api/v1/public-key", "GET", CertificateController::class . "@getPublicKey", firewall: RateLimiterFirewall::class);
+$routeTable->addRoute("/api/v1/sign", "POST", CertificateController::class . "@signHash", firewall: RateLimiterFirewall::class);
+
+$routeTable->addRoute("/api/v1/licenses/<license_key>", "GET", LicenseApiController::class . "@validate", firewall: RateLimiterFirewall::class);
+$routeTable->addRoute("/api/v1/licenses/<license_key>/devices", "GET", LicenseApiController::class . "@devices", firewall: RateLimiterFirewall::class);
+$routeTable->addRoute("/api/v1/licenses/<license_key>/activate", "POST", LicenseApiController::class . "@activate", firewall: RateLimiterFirewall::class);
+$routeTable->addRoute("/api/v1/licenses/<license_key>/deactivate", "POST", LicenseApiController::class . "@deactivate", firewall: RateLimiterFirewall::class);
 
 $routeTable->setNotFoundController(NotFoundController::class);
 

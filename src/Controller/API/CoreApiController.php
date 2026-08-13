@@ -8,11 +8,14 @@ use Doctrine\ORM\EntityManager;
 use Framework\Http\AbstractController;
 use Framework\Http\Objects\Response;
 use Framework\Http\ViewEngine\ViewEngineInterface;
+use RuntimeException;
+use SodiumException;
 
 class CoreApiController extends AbstractController
 {
     public AuditLogService $auditLogService;
     public EventBusService $eventBusService;
+
     public function __construct(ViewEngineInterface $viewEngine, public EntityManager $entityManager)
     {
         parent::__construct($viewEngine);
@@ -20,33 +23,76 @@ class CoreApiController extends AbstractController
         $this->eventBusService = new EventBusService($this->entityManager);
     }
 
+    /**
+     * @param string $message
+     * @return string Base64 encoded signature
+     * @throws SodiumException
+     */
+    protected function signResponse(string $message): string
+    {
+        $keyPath = __DIR__ . "/../../../storage/keys/master_private.pem";
+        $privateKeyPem = file_get_contents($keyPath);
+
+        $privateKey = openssl_pkey_get_private($privateKeyPem);
+        if (!$privateKey) {
+            throw new \RuntimeException("Invalid PEM private key");
+        }
+
+        openssl_sign($message, $binarySignature, $privateKey, OPENSSL_ALGO_SHA256);
+
+        return base64_encode($binarySignature);
+    }
+
     public function success(array $data = []): Response
     {
-        return $this->json([
+        $response = new Response();
+        $response->setHeaders([
+            'Content-Type' => 'application/json',
+        ]);
+
+        $payloadJson = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        $response->setBody(json_encode([
             'success' => true,
             'response' => $data,
             'error' => null,
             'metadata' => [
                 'timestamp' => microtime(true),
                 'timezone' => date_default_timezone_get(),
-            ]
-        ]);
+            ],
+            'signature' => $this->signResponse($payloadJson)
+        ]));
+
+        return $response;
     }
 
-    public function error(string $errorCode, string $errorDesc, int $code, array $errorData = []): Response
+    public function error(string $errorCode, string $errorDesc, int $code = 400, array $errorData = []): Response
     {
-        return $this->json([
+        $response = new Response();
+        $response->setHeaders([
+            'Content-Type' => 'application/json',
+        ]);
+        $response->setStatusCode($code);
+
+        $errorPayload = [
+            'code' => $errorCode,
+            'description' => $errorDesc,
+            'data' => $errorData,
+        ];
+
+        $payloadJson = json_encode($errorPayload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        $response->setBody(json_encode([
             'success' => false,
             'response' => [],
-            'error' => [
-                'code' => $errorCode,
-                'description' => $errorDesc,
-                'data' => $errorData,
-            ],
+            'error' => $errorPayload,
             'metadata' => [
                 'timestamp' => microtime(true),
                 'timezone' => date_default_timezone_get(),
-            ]
-        ], $code);
+            ],
+            'signature' => $this->signResponse($payloadJson)
+        ]));
+
+        return $response;
     }
 }

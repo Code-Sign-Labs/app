@@ -1,7 +1,8 @@
 <?php
 declare(strict_types=1);
-namespace App\Controller\API;
+namespace App\Controller\API\v1;
 
+use App\Controller\API\CoreApiController;
 use App\Entity\Activation;
 use App\Entity\LicenseKey;
 use App\Enum\EventNameEnum;

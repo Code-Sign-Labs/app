@@ -28,6 +28,7 @@ When a user exceeds the allowed number of requests, they will receive an error r
   "metadata": {
     "timestamp": 1234567890.123456,
     "timezone": "Europe/Warsaw"
-  }
+  },
+  "signature": "MEUCIQDx8...[base64-encoded signature]"
 }
 ```

@@ -138,6 +138,11 @@ class SettingsController extends CoreAbstractController
             $updateEnv["RATE_LIMITER_TIME_WINDOW"] = $timeWindowRateLimiting;
         }
 
+        $hashingIpAllowlist = $request->getBody("hashingIpAllowlist");
+        if($hashingIpAllowlist) {
+            $updateEnv["HASHING_IP_ALLOWLIST"] = preg_replace('/\s+/', '', $hashingIpAllowlist);
+        }
+
         $envPath = __DIR__ ."/../../../.env";
         foreach($updateEnv as $name => $value) {
             $status = $this->updateEnv($envPath, $name, $value);

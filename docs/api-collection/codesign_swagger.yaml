@@ -1,0 +1,162 @@
+openapi: 3.1.0
+info:
+  title: Code Sign API
+  version: 1.0.0
+servers:
+  - url: "{protocol}://{domain}"
+    variables:
+      protocol:
+        default: https
+      domain:
+        default: example.com
+
+paths:
+  /api/v1/public-key:
+    get:
+      summary: Get Public Key
+      operationId: getPublicKey
+      responses:
+        "200":
+          description: Public key returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  public_key:
+                    type: string
+
+  /api/v1/sign:
+    post:
+      summary: Sign hash
+      operationId: signHash
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                license_key:
+                  type: string
+                activation_id:
+                  type: string
+                algorithm:
+                  type: string
+                  enum: [sha256]
+                hash:
+                  type: string
+              required:
+                - license_key
+                - activation_id
+                - algorithm
+                - hash
+      responses:
+        "200":
+          description: Signed hash
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signature:
+                    type: string
+
+  /api/v1/licenses/{license_key}:
+    get:
+      summary: Validate License
+      operationId: validateLicense
+      parameters:
+        - name: license_key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: License details
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/v1/licenses/{license_key}/devices:
+    get:
+      summary: List activation devices
+      operationId: listDevices
+      parameters:
+        - name: license_key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /api/v1/licenses/{license_key}/activate:
+    post:
+      summary: Activate license
+      operationId: activateLicense
+      parameters:
+        - name: license_key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                device_name:
+                  type: string
+                device_identifier:
+                  type: string
+              required:
+                - device_name
+                - device_identifier
+      responses:
+        "200":
+          description: Activation created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/v1/licenses/{license_key}/deactivate:
+    post:
+      summary: Deactivate license
+      operationId: deactivateLicense
+      parameters:
+        - name: license_key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                activation_id:
+                  type: string
+              required:
+                - activation_id
+      responses:
+        "200":
+          description: License deactivated
+          content:
+            application/json:
+              schema:
+                type: object
