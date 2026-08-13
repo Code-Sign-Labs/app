@@ -2,10 +2,13 @@ vendor/
 storage/cache/*
 storage/logs/*
 storage/files/*
+storage/keys/*
+storage/.migrations_completed
 !storage/files/uploads/.gitkeep
 !storage/cache/.gitkeep
 !storage/logs/.gitkeep
 !storage/files/.gitkeep
+!storage/keys/.gitkeep
 .phpunit.result.cache
 composer.lock
 .idea/
@@ -20,4 +23,3 @@ dist/
 build/
 .changes.md
 .todo.md
-storage/.migrations_completed

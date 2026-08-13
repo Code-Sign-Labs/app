@@ -1,0 +1,241 @@
+{
+  "info": {
+    "_postman_id": "beb64790-aceb-4b67-87bb-1b05f9e7214e",
+    "name": "Code Sign",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "25340779"
+  },
+  "item": [
+    {
+      "name": "V1",
+      "item": [
+        {
+          "name": "Signing",
+          "item": [
+            {
+              "name": "Get Public Key",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{protocol}}://{{domain}}/api/v1/public-key",
+                  "protocol": "{{protocol}}",
+                  "host": [
+                    "{{domain}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "public-key"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Sign hash",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "license_key",
+                      "value": "{{license_key}}",
+                      "type": "text",
+                      "uuid": "47831769-fcd5-4f70-a496-4c347bad3e40"
+                    },
+                    {
+                      "key": "activation_id",
+                      "value": "{{activation_id}}",
+                      "type": "text",
+                      "uuid": "5ab2ec96-5638-42a1-ac13-32e28ca38f8c"
+                    },
+                    {
+                      "key": "algorithm",
+                      "value": "sha256",
+                      "type": "text",
+                      "uuid": "d71677ff-fbda-4911-80b0-7396a3e9f0c7"
+                    },
+                    {
+                      "key": "hash",
+                      "value": "example-hash",
+                      "type": "text",
+                      "uuid": "a08c1d5e-b321-4783-b15e-fd327110828f"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{protocol}}://{{domain}}/api/v1/sign",
+                  "protocol": "{{protocol}}",
+                  "host": [
+                    "{{domain}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "sign"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "License",
+          "item": [
+            {
+              "name": "Validate License",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": []
+                },
+                "url": {
+                  "raw": "{{protocol}}://{{domain}}/api/v1/licenses/{{license_key}}",
+                  "protocol": "{{protocol}}",
+                  "host": [
+                    "{{domain}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "licenses",
+                    "{{license_key}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List activations devices",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": []
+                },
+                "url": {
+                  "raw": "{{protocol}}://{{domain}}/api/v1/licenses/{{license_key}}/devices",
+                  "protocol": "{{protocol}}",
+                  "host": [
+                    "{{domain}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "licenses",
+                    "{{license_key}}",
+                    "devices"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Activate license",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "device_name",
+                      "value": "{{$randomUserName}}",
+                      "type": "text",
+                      "uuid": "d7f59d3d-4cbf-401e-babb-5c90240b6924"
+                    },
+                    {
+                      "key": "device_identifier",
+                      "value": "{{$randomUserAgent}}",
+                      "type": "text",
+                      "uuid": "8e65a2fc-b224-4690-b102-ef9398e33c62"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{protocol}}://{{domain}}/api/v1/licenses/{{license_key}}/activate",
+                  "protocol": "{{protocol}}",
+                  "host": [
+                    "{{domain}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "licenses",
+                    "{{license_key}}",
+                    "activate"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Deactivate license",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "activation_id",
+                      "value": "{{activation_id}}",
+                      "type": "text",
+                      "uuid": "d7f59d3d-4cbf-401e-babb-5c90240b6924"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{protocol}}://{{domain}}/api/v1/licenses/{{license_key}}/deactivate",
+                  "protocol": "{{protocol}}",
+                  "host": [
+                    "{{domain}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "licenses",
+                    "{{license_key}}",
+                    "deactivate"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "protocol",
+      "value": ""
+    },
+    {
+      "key": "domain",
+      "value": ""
+    },
+    {
+      "key": "license_key",
+      "value": ""
+    },
+    {
+      "key": "activation_id",
+      "value": ""
+    }
+  ]
+}

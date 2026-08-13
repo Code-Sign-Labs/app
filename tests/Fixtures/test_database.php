@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 use Doctrine\ORM\EntityManager;
 use Framework\Configs\ConfigCore;
 

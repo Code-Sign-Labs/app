@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace Framework\Kernel\Subscribers;
 
 use Framework\AppEnum;

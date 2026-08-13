@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace Framework\Http\ViewEngine\Engines;
 
 use Framework\Http\ViewEngine\ViewEngineInterface;

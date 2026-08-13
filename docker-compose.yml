@@ -20,6 +20,21 @@ services:
       timeout: 5s
       retries: 3
 
+  redis:
+    image: redis:7-alpine
+    container_name: codesign-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - codesign-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
   php:
     build:
       context: .
@@ -35,11 +50,15 @@ services:
       DB_NAME: ${DB_NAME:-codesign}
       DB_USER: ${DB_USER:-codesign}
       DB_PASSWORD: ${DB_PASSWORD:-codesign}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       APP_ENV: ${APP_ENV:-production}
     networks:
       - codesign-network
     depends_on:
       mariadb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   nginx:
@@ -58,6 +77,8 @@ services:
 
 volumes:
   mariadb_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:

@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace App\Controller\App;
 
 use App\Controller\CoreAbstractController;
@@ -118,6 +118,29 @@ class SettingsController extends CoreAbstractController
 
         if($smtpMail && $smtpMail !== $_ENV["MESSENGER_MAIL"]) {
             $updateEnv["MESSENGER_MAIL"] = $smtpMail;
+        }
+
+        $useRateLimiting = $request->getbody("useRateLimiting");
+        $maxRequestsRateLimiting = $request->getBody("maxRequestsRateLimiting");
+        $timeWindowRateLimiting = $request->getBody("timeWindowRateLimiting");
+
+        if($useRateLimiting) {
+            $updateEnv["RATE_LIMITER_ENABLED"] = "true";
+        } else {
+            $updateEnv["RATE_LIMITER_ENABLED"] = "false";
+        }
+
+        if($maxRequestsRateLimiting && $maxRequestsRateLimiting !== $_ENV["RATE_LIMITER_MAX_REQUESTS"]) {
+            $updateEnv["RATE_LIMITER_MAX_REQUESTS"] = $maxRequestsRateLimiting;
+        }
+
+        if($timeWindowRateLimiting && $timeWindowRateLimiting !== $_ENV["RATE_LIMITER_TIME_WINDOW"]) {
+            $updateEnv["RATE_LIMITER_TIME_WINDOW"] = $timeWindowRateLimiting;
+        }
+
+        $hashingIpAllowlist = $request->getBody("hashingIpAllowlist");
+        if($hashingIpAllowlist) {
+            $updateEnv["HASHING_IP_ALLOWLIST"] = preg_replace('/\s+/', '', $hashingIpAllowlist);
         }
 
         $envPath = __DIR__ ."/../../../.env";

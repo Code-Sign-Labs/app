@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Addons\Prometheus;
+
+use Redis;
 
 class MetricRegistry
 {
@@ -11,88 +15,109 @@ class MetricRegistry
 
     protected const DEFAULT_HISTOGRAM_BUCKETS = [0.5, 1, 2.5, 5, 10];
 
-    public function __construct(protected RedisDriver $driver)
+    public function __construct(protected Redis $client)
     {
     }
 
-    /**
-     * @param string $name
-     * @param array $labels
-     */
-    public function counter(string $name, array $labels = []): void
+    public function counter(string $name, array $labels = [], int $value = 1): void
     {
+        if (empty($name)) {
+            return;
+        }
+
         $series = $this->seriesKey($name, $labels);
-        $client = $this->driver->getClient();
 
-        $client->sadd(self::SERIES_COUNTERS, [$series]);
-
-        $client->incrby($this->redisKey('counter', $series), 1);
+        $this->client->sAdd(self::SERIES_COUNTERS, $series);
+        $this->client->incrBy($this->redisKey('counter', $series), $value);
     }
 
-    /**
-     * @param string $name
-     * @param float $value
-     * @param array $labels
-     */
     public function gauge(string $name, float $value, array $labels = []): void
     {
-        $series = $this->seriesKey($name, $labels);
-        $client = $this->driver->getClient();
+        if (empty($name)) {
+            return;
+        }
 
-        $client->sadd(self::SERIES_GAUGES, [$series]);
-        $client->set($this->redisKey('gauge', $series), (string) $value);
+        $series = $this->seriesKey($name, $labels);
+
+        $this->client->sAdd(self::SERIES_GAUGES, $series);
+        $this->client->set($this->redisKey('gauge', $series), (string) $value);
     }
 
-    /**
-     * @param string $name
-     * @param float $value
-     * @param array $labels
-     */
     public function histogram(string $name, float $value, array $labels = []): void
     {
-        $series = $this->seriesKey($name, $labels);
-        $client = $this->driver->getClient();
+        if ($name === '') {
+            return;
+        }
 
-        $client->sadd(self::SERIES_HISTOGRAMS, [$series]);
+        $series = $this->seriesKey($name, $labels);
+
+        $this->client->sAdd(self::SERIES_HISTOGRAMS, $series);
 
         $key = $this->redisKey('histogram', $series);
 
         foreach (self::DEFAULT_HISTOGRAM_BUCKETS as $bucket) {
             if ($value <= $bucket) {
-                $client->hincrby($key, 'le=' . $this->bucketToString($bucket), 1);
-                break;
+                $this->client->hIncrBy(
+                    $key,
+                    'le=' . $this->bucketToString($bucket),
+                    1
+                );
             }
         }
-        $client->hincrby($key, 'le=+Inf', 1);
 
-        // sum/count
-        $client->hincrbyfloat($key, 'sum', (string) $value);
-        $client->hincrby($key, 'count', 1);
+        // Every observation belongs to +Inf.
+        $this->client->hIncrBy($key, 'le=+Inf', 1);
+
+        // Histogram sum/count.
+        $this->client->hIncrByFloat(
+            $key,
+            'sum',
+            $value
+        );
+
+        $this->client->hIncrBy(
+            $key,
+            'count',
+            1
+        );
     }
 
-    /**
-     * @return string
-     */
+    protected function bucketToString(float $bucket): string
+    {
+        return (string) $bucket;
+    }
+
     public function render(): string
     {
-        $client = $this->driver->getClient();
         $out = [];
 
-        foreach ($client->smembers(self::SERIES_COUNTERS) as $series) {
-            [$name, $labels] = $this->decodeSeries($series);
-            $value = $client->get($this->redisKey('counter', $series)) ?? '0';
+        // COUNTERS
+        $counters = $this->client->sMembers(self::SERIES_COUNTERS) ?: [];
+        foreach ($counters as $series) {
+            [$name, $labels] = $this->decodeSeries((string) $series);
+            if ($name === '') continue;
+
+            $value = $this->client->get($this->redisKey('counter', (string) $series)) ?? '0';
             $out[] = sprintf('%s%s %s', $name, $labels, $value);
         }
 
-        foreach ($client->smembers(self::SERIES_GAUGES) as $series) {
-            [$name, $labels] = $this->decodeSeries($series);
-            $value = (float) ($client->get($this->redisKey('gauge', $series)) ?? 0);
+        // GAUGES
+        $gauges = $this->client->sMembers(self::SERIES_GAUGES) ?: [];
+        foreach ($gauges as $series) {
+            [$name, $labels] = $this->decodeSeries((string) $series);
+            if ($name === '') continue;
+
+            $value = (float) ($this->client->get($this->redisKey('gauge', (string) $series)) ?? 0);
             $out[] = sprintf('%s%s %f', $name, $labels, $value);
         }
 
-        foreach ($client->smembers(self::SERIES_HISTOGRAMS) as $series) {
-            [$baseName, $labels] = $this->decodeSeries($series);
-            $data = $client->hgetall($this->redisKey('histogram', $series));
+        // HISTOGRAMS
+        $histograms = $this->client->sMembers(self::SERIES_HISTOGRAMS) ?: [];
+        foreach ($histograms as $series) {
+            [$baseName, $labels] = $this->decodeSeries((string) $series);
+            if ($baseName === '') continue;
+
+            $data = $this->client->hGetAll($this->redisKey('histogram', (string) $series)) ?: [];
 
             // bucket lines
             foreach ($this->histogramBucketOrder() as $le) {
@@ -113,22 +138,12 @@ class MetricRegistry
         return implode("\n", $out) . "\n";
     }
 
-    /**
-     * @param string $name
-     * @param array $labels
-     * @return string
-     */
     protected function seriesKey(string $name, array $labels): string
     {
         ksort($labels);
-        return $name . '|' . http_build_query($labels);
+        return $name . '|' . base64_encode((string) json_encode($labels));
     }
 
-    /**
-     * @param string $type
-     * @param string $series
-     * @return string
-     */
     protected function redisKey(string $type, string $series): string
     {
         return self::PREFIX . $type . ':' . $series;
@@ -139,23 +154,34 @@ class MetricRegistry
      */
     protected function decodeSeries(string $series): array
     {
-        [$name, $raw] = explode('|', $series, 2);
+        $parts = explode('|', $series, 2);
+        $name = trim($parts[0] ?? '');
+        $raw = $parts[1] ?? '';
+
+        if ($name === '' || $name === 'Array') {
+            return ['', ''];
+        }
+
         if ($raw === '') {
             return [$name, ''];
         }
 
-        parse_str($raw, $labels);
+        $decodedJson = base64_decode($raw, true);
+        $labels = $decodedJson ? json_decode($decodedJson, true) : [];
+
+        if (!is_array($labels) || empty($labels)) {
+            return [$name, ''];
+        }
+
         $pairs = [];
         foreach ($labels as $k => $v) {
-            $pairs[] = $k . '="' . $v . '"';
+            $val = is_array($v) ? json_encode($v) : (string) $v;
+            $pairs[] = $k . '="' . addslashes($val) . '"';
         }
 
         return [$name, '{' . implode(',', $pairs) . '}'];
     }
 
-    /**
-     * @return string[]
-     */
     protected function histogramBucketOrder(): array
     {
         $out = [];
@@ -166,38 +192,18 @@ class MetricRegistry
         return $out;
     }
 
-    /**
-     * @param float $bucket
-     * @return string
-     */
-    protected function bucketToString(float $bucket): string
-    {
-
-        $s = rtrim(rtrim((string) $bucket, '0'), '.');
-        return $s === '' ? '0' : $s;
-    }
-
-    /**
-     * @param string $labelsStr
-     * @param array $extra
-     * @return string
-     */
     protected function mergeLabelsString(string $labelsStr, array $extra): string
     {
+        $extraPairs = [];
+        foreach ($extra as $k => $v) {
+            $extraPairs[] = $k . '="' . addslashes((string) $v) . '"';
+        }
+
         if ($labelsStr === '') {
-            $pairs = [];
-            foreach ($extra as $k => $v) {
-                $pairs[] = $k . '="' . $v . '"';
-            }
-            return '{' . implode(',', $pairs) . '}';
+            return '{' . implode(',', $extraPairs) . '}';
         }
 
         $inner = substr($labelsStr, 1, -1);
-        $pairs = $inner === '' ? [] : [$inner];
-        foreach ($extra as $k => $v) {
-            $pairs[] = $k . '="' . $v . '"';
-        }
-        return '{' . implode(',', $pairs) . '}';
+        return '{' . $inner . ',' . implode(',', $extraPairs) . '}';
     }
 }
-

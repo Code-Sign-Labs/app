@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace Framework\Http\ViewEngine;
 
 use Framework\Http\ViewEngine\Engines\BladeViewEngine;

@@ -1,7 +1,8 @@
 <?php
-
+declare(strict_types=1);
 namespace Framework;
 
+use Framework\Kernel\Subscribers\RedisSubscriber;
 use Tests\Core\TestsEventHandler;
 use DebugBar\JavascriptRenderer;
 use DebugBar\StandardDebugBar;
@@ -102,6 +103,7 @@ class Kernel
         $bootstrap
             ->addSubscriber($this->dependencyInjection->build(ErrorHandlingSubscriber::class))
             ->addSubscriber($this->dependencyInjection->build(DebugSubscriber::class))
+            ->addSubscriber($this->dependencyInjection->build(RedisSubscriber::class))
             ->addSubscriber($this->dependencyInjection->build(ViewEngineSubscriber::class))
             ->addSubscriber($this->dependencyInjection->build(OrmSubscriber::class));
         $bootstrap
@@ -120,6 +122,9 @@ class Kernel
             'timeFloat' => $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true),
         ]);
 
+        $this->eventManager->triggerEvent(KernelEvents::CONFIGURE_REDIS, [
+            'container' => $this->container,
+        ]);
         $this->eventManager->triggerEvent(KernelEvents::CONFIGURE_ADDONS, [
             'container' => $this->container,
             'kernelContext' => $kernelContext,

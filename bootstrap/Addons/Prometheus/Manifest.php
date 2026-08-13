@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace Framework\Addons\Prometheus;
 
 use Exception;
@@ -7,6 +7,7 @@ use Framework\Addons\AddonInterface;
 use Framework\Addons\AddonsManager;
 use Framework\Configs\ConfigCore;
 use Framework\Core\Container\Container;
+use Redis;
 
 class Manifest implements AddonInterface
 {
@@ -33,11 +34,8 @@ class Manifest implements AddonInterface
      */
     public function initialize(): void
     {
-        $this->container->bind(RedisDriver::class, function() {
-            return new RedisDriver();
-        });
         $this->container->bind(MetricRegistry::class, function() {
-            return new MetricRegistry($this->container->resolve(RedisDriver::class));
+            return new MetricRegistry($this->container->resolve(Redis::class));
         });
     }
 

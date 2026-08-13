@@ -1,9 +1,9 @@
 <?php
-
+declare(strict_types=1);
 $config = new \Framework\Configs\Config();
 
 $config->set('addons.enabled_addons', [
-
+    'Prometheus'
 ]);
 
 $config->set('addons.configs', [
