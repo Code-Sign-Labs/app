@@ -19,11 +19,17 @@ use Framework\Router\RouteTable;
 
 $routeTable = new RouteTable();
 
+// Authentication routes
+
 $routeTable->addRoute("/login", "GET", AuthenticationController::class . "@loginIndex", firewall: IsNotLoggedFirewall::class);
 $routeTable->addRoute("/login", "POST", AuthenticationController::class . "@login", firewall: IsNotLoggedFirewall::class);
 $routeTable->addRoute("/logout", "GET", AuthenticationController::class . "@logout", firewall: IsLoggedFirewall::class);
 
+// Application routes
+
 $routeTable->addRoute("/app/", "GET", HomeController::class . "@index", firewall: IsLoggedFirewall::class);
+
+// Licenses
 
 $routeTable->addRoute("/app/licenses", "GET", LicenseController::class . "@list", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/license-new", "GET", LicenseController::class . "@createIndex", firewall: IsLoggedFirewall::class);
@@ -32,6 +38,8 @@ $routeTable->addRoute("/app/licenses/<licenseId>", "GET", LicenseController::cla
 $routeTable->addRoute("/app/licenses/<licenseId>/revoke", "GET", LicenseController::class . "@revoke", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/licenses/<licenseId>/suspend", "GET", LicenseController::class . "@suspend", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/licenses/<licenseId>/delete", "GET", LicenseController::class . "@delete", firewall: IsLoggedFirewall::class);
+
+// Products
 
 $routeTable->addRoute("/app/products", "GET", ProductController::class . "@list", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/products-new", "GET", ProductController::class . "@indexCreate", firewall: IsLoggedFirewall::class);
@@ -42,11 +50,15 @@ $routeTable->addRoute("/app/products/<productSlug>", "GET", ProductController::c
 $routeTable->addRoute("/app/products/<productSlug>/archive", "GET", ProductController::class . "@archive", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/products/<productSlug>/delete", "GET", ProductController::class . "@delete", firewall: IsLoggedFirewall::class);
 
+// Webhooks
+
 $routeTable->addRoute("/app/webhooks", "GET", WebhookController::class . "@index", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/webhooks-new", "GET", WebhookController::class . "@indexCreate", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/webhooks-new", "POST", WebhookController::class . "@create", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/webhooks/<webhookId>", "GET", WebhookController::class . "@details", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/webhooks/<webhookId>/delete", "GET", WebhookController::class . "@delete", firewall: IsLoggedFirewall::class);
+
+// Users
 
 $routeTable->addRoute("/app/users", "GET", UserController::class . "@list", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/users-new", "GET", UserController::class . "@createIndex", firewall: IsLoggedFirewall::class);
@@ -56,13 +68,17 @@ $routeTable->addRoute("/app/users/<userId>/delete", "GET", UserController::class
 $routeTable->addRoute("/app/users/<userId>/edit", "GET", UserController::class . "@editIndex", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/users/<userId>/edit", "POST", UserController::class . "@edit", firewall: IsLoggedFirewall::class);
 
+// Settings
+
 $routeTable->addRoute("/app/settings", "GET", SettingsController::class . "@index", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/settings", "POST", SettingsController::class . "@update", firewall: IsLoggedFirewall::class);
+
+// Certificates
 
 $routeTable->addRoute("/app/certs", "GET", CertificatesController::class . "@index", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/certs", "POST", CertificatesController::class . "@rotate", firewall: IsLoggedFirewall::class);
 
-// API
+// Public API routes
 
 $routeTable->addRoute("/api/v1/public-key", "GET", CertificateController::class . "@getPublicKey", firewall: RateLimiterFirewall::class);
 $routeTable->addRoute("/api/v1/sign", "POST", CertificateController::class . "@signHash", firewall: RateLimiterFirewall::class);

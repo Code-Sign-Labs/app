@@ -50,7 +50,7 @@ class SettingsController extends CoreAbstractController
      * @param string $value
      * @return bool
      */
-    protected function updateEnv(string $path, string $key, string $value): bool
+    public static function updateEnv(string $path, string $key, string $value): bool
     {
         if (!file_exists($path)) {
             return false;
@@ -143,9 +143,21 @@ class SettingsController extends CoreAbstractController
             $updateEnv["HASHING_IP_ALLOWLIST"] = preg_replace('/\s+/', '', $hashingIpAllowlist);
         }
 
+        $useIpAllowlist = $request->getBody("useIpAllowlist");
+        if($useIpAllowlist) {
+            $updateEnv["ACCESS_IP_ALLOWLIST_ENABLED"] = "true";
+        } else {
+            $updateEnv["ACCESS_IP_ALLOWLIST_ENABLED"] = "false";
+        }
+
+        $accessIpAllowlist = $request->getBody("accessIpAllowlist");
+        if($accessIpAllowlist) {
+            $updateEnv["ACCESS_IP_ALLOWLIST"] = preg_replace('/\s+/', '', $accessIpAllowlist);
+        }
+
         $envPath = __DIR__ ."/../../../.env";
         foreach($updateEnv as $name => $value) {
-            $status = $this->updateEnv($envPath, $name, $value);
+            $status = self::updateEnv($envPath, $name, $value);
             if(!$status) {
                 $this->setFlash($request, "settings.error", "Unable to update environment variable '$name'.");
                 return $this->redirect("/app/settings");

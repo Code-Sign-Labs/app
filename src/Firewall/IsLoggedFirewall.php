@@ -15,6 +15,7 @@ use Throwable;
 class IsLoggedFirewall extends AbstractController implements FirewallInterface
 {
     protected ?Request $request = null;
+    protected bool $byAllowlist = false;
 
     public function __construct(
         protected ViewEngineInterface $viewEngine,
@@ -29,6 +30,12 @@ class IsLoggedFirewall extends AbstractController implements FirewallInterface
      */
     public function handle(Request $request): bool
     {
+        $ipAllowlistFirewall = AccessIpAllowlistFirewall::handleStatic($request);
+        if(!$ipAllowlistFirewall) {
+            $this->byAllowlist = true;
+            return false;
+        };
+
         $this->request = $request;
         $userId = $request->session()->get("user_id");
         if(!$userId) return false;
@@ -50,6 +57,10 @@ class IsLoggedFirewall extends AbstractController implements FirewallInterface
      */
     public function onFailure(): Response
     {
+        if($this->byAllowlist) {
+            return $this->text("Unauthorized " . $_SERVER["REMOTE_ADDR"], 401);
+        }
+
         return $this->redirect("/login");
     }
 }

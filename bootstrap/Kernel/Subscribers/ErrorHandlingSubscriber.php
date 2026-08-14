@@ -48,7 +48,6 @@ class ErrorHandlingSubscriber implements KernelEventSubscriberInterface
             });
 
             set_error_handler(function (...$args) use ($appErrorHandler) {
-                var_dump($args);
                 $appErrorHandler->handleError(...$args);
             });
         });
