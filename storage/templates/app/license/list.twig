@@ -45,6 +45,12 @@
                 <option value="subscription" {% if filters.type == "subscription" %}selected{% endif %}>Subscription</option>
                 <option value="trial" {% if filters.type == "trial" %}selected{% endif %}>Trial</option>
             </select>
+            <select class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white" name="batch">
+                <option value="all" {% if filters.batch == "all" %}selected{% endif %}>All batches</option>
+                {% for batch in batches %}
+                    <option value="{{ batch.id }}" {% if filters.batch == batch.id %}selected{% endif %}>{{ batch.label }}</option>
+                {% endfor %}
+            </select>
             <div class="ml-auto flex items-center gap-2">
                 <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">

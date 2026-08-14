@@ -4,6 +4,7 @@ namespace App\Controller\App;
 
 use App\Controller\CoreAbstractController;
 use App\Entity\Activation;
+use App\Entity\Batch;
 use App\Entity\LicenseKey;
 use App\Entity\Product;
 use App\Enum\EventNameEnum;
@@ -49,6 +50,7 @@ class LicenseController extends CoreAbstractController
         $productFilter = $request->getQuery("product", "all");
         $statusFilter = $request->getQuery("status", "all");
         $typeFilter = $request->getQuery("type", "all");
+        $batchFilter = $request->getQuery("batch", "all");
         $currentPage = max(1, (int) $request->getQuery("page", 1));
         $perPage = 10;
 
@@ -58,6 +60,18 @@ class LicenseController extends CoreAbstractController
             $statuses = array_map(static fn (LicenseKeyStatusEnum $status) => $status->value, LicenseKeyStatusEnum::cases());
             if(in_array($statusFilter, $statuses, true)) {
                 $criteria["status"] = $statusFilter;
+            }
+        }
+
+        if($batchFilter !== "all") {
+            $batch = $this->entityManager->getRepository(Batch::class)->findBy([
+                'id' => $batchFilter
+            ]);
+
+            if($batch) {
+                $criteria["batch"] = $batch;
+            } else {
+                $batchFilter = "all";
             }
         }
 
@@ -89,6 +103,7 @@ class LicenseController extends CoreAbstractController
             'product' => $productFilter !== 'all' ? $productFilter : null,
             'status' => $statusFilter !== 'all' ? $statusFilter : null,
             'type' => $typeFilter !== 'all' ? $typeFilter : null,
+            'batch' => $batchFilter !== 'all' ? $batchFilter : null,
         ], static fn ($value) => $value !== null && $value !== '');
 
         $licenses = $licenseRepository->findBy($criteria, ['createdAt' => 'DESC'], limit: $perPage, offset: $offset);
@@ -98,10 +113,12 @@ class LicenseController extends CoreAbstractController
             'products' => $products,
             'licenses' => $licenses,
             'success' => $success,
+            'batches' => $this->entityManager->getRepository(Batch::class)->findAll(),
             'filters' => [
                 'product' => $productFilter,
                 'status' => $statusFilter,
                 'type' => $typeFilter,
+                'batch' => $batchFilter,
             ],
             'pagination' => [
                 'currentPage' => $currentPage,
@@ -179,33 +196,78 @@ class LicenseController extends CoreAbstractController
         $notes = $request->getBody("notes");
 
 
-        try {
-            $licenseKey = new LicenseKey();
-            $licenseKey->setProduct($product)
-                ->setType(LicenseKeyTypeEnum::from($type))
-                ->setMaxActivations($maxActivations ?? 1)
-                ->setExpiresAt($expiresAt ? new DateTime($expiresAt) : null)
-                ->setNotes($notes)
-                ->setStatus(LicenseKeyStatusEnum::active)
-                ->setKey($this->generateLicenseKey());
+        $batchName = $request->getbody("batch");
+        $batchQuantity = $request->getbody("batch_quantity");
 
-            $this->entityManager->persist($licenseKey);
+        try {
+            if($batchName && $batchQuantity) {
+                $batch = new Batch();
+                $batch->setLabel($batchName)
+                    ->setType(LicenseKeyTypeEnum::from($type))
+                    ->setExpiresAt($expiresAt ? new DateTime($expiresAt) : null)
+                    ->setProduct($product)
+                    ->setExportedAt(new DateTime())
+                    ->setMaxActivations($maxActivations ?? 1)
+                    ->setQuantity((int) $batchQuantity);
+                $this->entityManager->persist($batch);
+
+                for($i = 0; $i < $batchQuantity; $i++) {
+                    $licenseKey = new LicenseKey();
+                    $licenseKey->setProduct($product)
+                        ->setType(LicenseKeyTypeEnum::from($type))
+                        ->setMaxActivations($maxActivations ?? 1)
+                        ->setExpiresAt($expiresAt ? new DateTime($expiresAt) : null)
+                        ->setNotes($notes)
+                        ->setStatus(LicenseKeyStatusEnum::active)
+                        ->setKey($this->generateLicenseKey())
+                        ->setBatch($batch);
+
+                    $this->entityManager->persist($licenseKey);
+                }
+            } else {
+                $licenseKey = new LicenseKey();
+                $licenseKey->setProduct($product)
+                    ->setType(LicenseKeyTypeEnum::from($type))
+                    ->setMaxActivations($maxActivations ?? 1)
+                    ->setExpiresAt($expiresAt ? new DateTime($expiresAt) : null)
+                    ->setNotes($notes)
+                    ->setStatus(LicenseKeyStatusEnum::active)
+                    ->setKey($this->generateLicenseKey());
+
+                $this->entityManager->persist($licenseKey);
+            }
             $this->entityManager->flush();
 
-            $this->eventBusService->triggerEvent(EventNameEnum::LICENSE_CREATE_SUCCESS, [
-                "licenseKey" => $licenseKey->getKey(),
-                "productId" => $product->getId(),
-                "author" => $user->getEmail(),
-                "ip" => $request->getUserIp(),
-                "userAgent" => $request->getHeader("User-Agent"),
-            ]);
+            if($batch) {
+                $this->eventBusService->triggerEvent(EventNameEnum::LICENSE_CREATE_SUCCESS, [
+                    "batchId" => $batch->getId(),
+                    "productId" => $product->getId(),
+                    "author" => $user->getEmail(),
+                    "ip" => $request->getUserIp(),
+                    "userAgent" => $request->getHeader("User-Agent"),
+                ]);
 
-            $this->auditLogService->log("license.create.success", [
-                'user_agent' => $request->getHeader("User-Agent"),
-                'ip' => $request->getUserIp()
-            ], "License with id {$licenseKey->getId()} has been created", $user);
+                $this->auditLogService->log("license.create.success", [
+                    'user_agent' => $request->getHeader("User-Agent"),
+                    'ip' => $request->getUserIp()
+                ], "Batch with id {$batch->getId()} has been created", $user);
+                $this->setFlash($request, "license.list.success", "License keys created successfully. Batch: {$batch->getLabel()}");
+            } else {
+                $this->eventBusService->triggerEvent(EventNameEnum::LICENSE_CREATE_SUCCESS, [
+                    "licenseKey" => $licenseKey->getKey(),
+                    "productId" => $product->getId(),
+                    "author" => $user->getEmail(),
+                    "ip" => $request->getUserIp(),
+                    "userAgent" => $request->getHeader("User-Agent"),
+                ]);
 
-            $this->setFlash($request, "license.list.success", "License key created successfully. License key: {$licenseKey->getKey()}");
+                $this->auditLogService->log("license.create.success", [
+                    'user_agent' => $request->getHeader("User-Agent"),
+                    'ip' => $request->getUserIp()
+                ], "License with id {$licenseKey->getId()} has been created", $user);
+                $this->setFlash($request, "license.list.success", "License key created successfully. License key: {$licenseKey->getKey()}");
+            }
+
             return $this->redirect("/app/licenses");
         } catch (Throwable $e) {
             $this->eventBusService->triggerEvent(EventNameEnum::LICENSE_CREATE_FAILURE, [
