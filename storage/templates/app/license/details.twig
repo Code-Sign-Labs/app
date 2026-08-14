@@ -78,6 +78,12 @@
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Expiration</p>
                             <p class="text-sm text-gray-900 mt-1">{{ license.expiresAt ? license.expiresAt|date('M j, Y, g:i A') : "Never" }}</p>
                         </div>
+                        {% if license.batch %}
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Batch</p>
+                                <p class="text-sm text-gray-900 mt-1">{{ license.batch.label }}</p>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
 

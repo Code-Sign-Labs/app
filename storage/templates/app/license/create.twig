@@ -60,6 +60,24 @@
                 </div>
             </div>
 
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                <h3 class="text-sm font-semibold text-gray-900">Batch (optional)</h3>
+                <p class="text-sm text-gray-500">Create multiple licenses at once.</p>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="batch" class="block text-sm font-medium text-gray-700 mb-1.5">Batch Name</label>
+                        <input type="text" id="batch" name="batch" placeholder="Enter a batch name..." class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        <p class="text-xs text-gray-400 mt-1"> Group licenses under a batch for easier management.</p>
+                    </div>
+                    <div>
+                        <label for="batch_quantity" class="block text-sm font-medium text-gray-700 mb-1.5">Quantity</label>
+                        <input type="number" id="batch_quantity" name="batch_quantity" placeholder="Enter the number of licenses..." class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        <p class="text-xs text-gray-400 mt-1">Enter the number of licenses to create in this batch.</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Configuration -->
             <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
                 <h3 class="text-sm font-semibold text-gray-900">Configuration</h3>
