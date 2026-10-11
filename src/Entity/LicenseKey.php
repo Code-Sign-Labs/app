@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace App\Entity;
 
+use App\Enum\LicenseKeyBillingTypeEnum;
 use App\Enum\LicenseKeyStatusEnum;
 use App\Enum\LicenseKeyTypeEnum;
 use DateTime;
@@ -23,7 +24,7 @@ class LicenseKey
     #[Column(type: 'uuid_binary')]
     protected string $id;
 
-    #[ManyToOne(targetEntity: Product::class, cascade: ["persist"], inversedBy: "licenseKeys")]
+    #[ManyToOne(targetEntity: Product::class, cascade: ["persist"], inversedBy: "licenses")]
     #[JoinColumn(onDelete: "CASCADE")]
     protected Product $product;
 
@@ -31,11 +32,18 @@ class LicenseKey
     #[JoinColumn(onDelete: "CASCADE")]
     protected ?Batch $batch = null;
 
+    #[ManyToOne(targetEntity: Customer::class, cascade: ["persist"])]
+    #[JoinColumn(onDelete: "SET NULL")]
+    protected Customer $customer;
+
     #[Column(name: "license_key", type: 'string', length: 255, unique: true)]
     protected string $key;
 
     #[Column(name: "type", enumType: LicenseKeyTypeEnum::class)]
     protected LicenseKeyTypeEnum $type = LicenseKeyTypeEnum::perpetual;
+
+    #[Column(name: "billing_type", enumType: LicenseKeyBillingTypeEnum::class)]
+    protected LicenseKeyBillingTypeEnum $billingType = LicenseKeyBillingTypeEnum::month;
 
     #[Column(name: "max_activations", type: 'integer', options: ["default" => 1])]
     protected int $max_activations = 1;
@@ -51,6 +59,9 @@ class LicenseKey
 
     #[Column(name: "status", enumType: LicenseKeyStatusEnum::class)]
     protected LicenseKeyStatusEnum $status;
+
+    #[Column(name: "stripe_subscription_id", type: "string", nullable: true)]
+    protected ?string $stripeSubscriptionId = null;
 
     #[Column(name: "created_at", type: "datetime")]
     protected DateTime $createdAt;
@@ -110,6 +121,14 @@ class LicenseKey
     public function getKey(): string
     {
         return $this->key;
+    }
+
+    /**_
+     * @return string
+     */
+    public function getLicenseKey(): string
+    {
+        return $this->getKey();
     }
 
     /**
@@ -308,5 +327,59 @@ class LicenseKey
     public function __toString(): string
     {
         return "lk_" . $this->id . "_" . $this->key;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getStripeSubscriptionId(): ?string
+    {
+        return $this->stripeSubscriptionId;
+    }
+
+    /**
+     * @param string|null $stripeSubscriptionId
+     * @return LicenseKey
+     */
+    public function setStripeSubscriptionId(?string $stripeSubscriptionId): LicenseKey
+    {
+        $this->stripeSubscriptionId = $stripeSubscriptionId;
+        return $this;
+    }
+
+    /**
+     * @return LicenseKeyBillingTypeEnum
+     */
+    public function getBillingType(): LicenseKeyBillingTypeEnum
+    {
+        return $this->billingType;
+    }
+
+    /**
+     * @param LicenseKeyBillingTypeEnum $billingType
+     * @return LicenseKey
+     */
+    public function setBillingType(LicenseKeyBillingTypeEnum $billingType): LicenseKey
+    {
+        $this->billingType = $billingType;
+        return $this;
+    }
+
+    /**
+     * @return Customer
+     */
+    public function getCustomer(): Customer
+    {
+        return $this->customer;
+    }
+
+    /**
+     * @param Customer $customer
+     * @return LicenseKey
+     */
+    public function setCustomer(Customer $customer): LicenseKey
+    {
+        $this->customer = $customer;
+        return $this;
     }
 }

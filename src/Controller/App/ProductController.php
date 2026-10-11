@@ -8,6 +8,7 @@ use App\Entity\Product;
 use App\Enum\EventNameEnum;
 use App\Enum\LicenseKeyStatusEnum;
 use App\Enum\ProductStatusEnum;
+use App\Service\StripeService;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
@@ -20,8 +21,10 @@ use Throwable;
 class ProductController extends CoreAbstractController
 {
     protected CSRFValidator $CSRFValidator;
+    protected StripeService $stripeService;
     public function __construct(ViewEngineInterface $viewEngine, EntityManager $entityManager)
     {
+        $this->stripeService = new StripeService();
         $this->CSRFValidator = new CSRFValidator();
         parent::__construct($viewEngine, $entityManager);
     }
@@ -78,8 +81,9 @@ class ProductController extends CoreAbstractController
         $description = $request->getBody('description');
         $version = $request->getBody('version');
         $slug = $request->getBody('slug');
+        $price = $request->getBody('price');
 
-        if(!$name || !$description || !$version || !$slug) {
+        if(!$name || !$description || !$version || !$slug || !$price) {
             $this->setFlash($request, "products.create.error", "You must fill all the fields.");
             return $this->redirect("/app/products-new");
         }
@@ -92,6 +96,21 @@ class ProductController extends CoreAbstractController
             ->setStatus(ProductStatusEnum::active);
 
         try {
+            $stripeProduct = $this->stripeService->getClient()
+                ->products->create([
+                    'name' => $product->getName(),
+                    'description' => $product->getDescription(),
+                    'metadata' => [
+                        'product_id' => $product->getId()
+                    ],
+                    'default_price_data' => [
+                        'unit_amount' => $price * 100, // Stripe expects amount in cents
+                        'currency' => $_ENV["STRIPE_DEFAULT_CURRENCY"] ?? 'eur',
+                    ]
+                ]);
+
+            $product->setStripeProductId($stripeProduct->id);
+
             $this->entityManager->persist($product);
             $this->entityManager->flush();
 
@@ -280,6 +299,12 @@ class ProductController extends CoreAbstractController
             return $a->getCreatedAt() <=> $b->getCreatedAt();
         });
         $licenses = array_reverse(array_slice($licenses, -5));
+        $productId = $product->getStripeProductId();
+
+        $stripeProduct = null;
+        if($productId) {
+            $stripeProduct = $this->stripeService->getProduct($productId);
+        }
 
         return $this->render("app/product/details.twig", [
             'user' => $user,
@@ -296,7 +321,12 @@ class ProductController extends CoreAbstractController
             })->count(),
             'licenses' => $licenses,
             'logs' => $this->auditLogService->getProductLogs($product),
-            'error' => $error
+            'error' => $error,
+            'price' =>
+                $stripeProduct ?
+                    ($stripeProduct->default_price ? $this->stripeService->getPrice(
+                        $stripeProduct->default_price
+                    )->unit_amount / 100 : 0) : 0
         ]);
     }
 
@@ -383,6 +413,11 @@ class ProductController extends CoreAbstractController
         if(!$product) return $this->redirect("/app/products");
 
         try {
+            $this->stripeService->getClient()
+                ->products->update($product->getStripeProductId(), [
+                    'active' => false
+                ]);
+
             $this->auditLogService->log("products.delete.success", [
                 'user_agent' => $request->getHeader('User-Agent'),
                 'ip' => $request->getUserIp()

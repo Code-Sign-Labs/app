@@ -145,7 +145,8 @@ class AppErrorHandler
             $requestUri,
             $method,
             $headers,
-            $bodyArray
+            $bodyArray,
+            $exception->getTraceAsString()
         );
     }
 

@@ -20,6 +20,7 @@
             <nav class="flex gap-6">
                 <button class="settings-tab active text-brand pb-3 text-sm font-medium hover:text-gray-700 border-b-2 border-transparent" onclick="switchTab(this, 'general')">General</button>
                 <button class="settings-tab pb-3 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent" onclick="switchTab(this, 'security')">Security</button>
+                <button class="settings-tab pb-3 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent" onclick="switchTab(this, 'stripe')">Stripe</button>
                 <button class="settings-tab pb-3 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent" onclick="switchTab(this, 'email')">SMTP</button>
             </nav>
         </div>
@@ -157,6 +158,31 @@
                     <div>
                         <label for="fromEmail" class="block text-sm font-medium text-gray-700 mb-1.5">From Email</label>
                         <input type="email" name="smtpMail" id="fromEmail" placeholder="Code Sign <noreply@acme.dev>" value="{{ env("MESSENGER_MAIL") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stripe -->
+            <div id="tab-stripe" class="hidden space-y-6">
+                <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                    <h3 class="text-sm font-semibold text-gray-900">Stripe Configuration</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="stripePublishableKey" class="block text-sm font-medium text-gray-700 mb-1.5">Stripe Publishable Key</label>
+                            <input type="text" name="stripePublishableKey" id="stripePublishableKey" placeholder="pk_test_..." value="{{ env("STRIPE_PUBLISHABLE_KEY") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        </div>
+                        <div>
+                            <label for="stripeSecretKey" class="block text-sm font-medium text-gray-700 mb-1.5">Stripe Secret Key</label>
+                            <input type="password" name="stripeSecretKey" id="stripeSecretKey" placeholder="sk_test_..." value="{{ env("STRIPE_SECRET_KEY") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="stripeWebhookSecret" class="block text-sm font-medium text-gray-700 mb-1.5">Stripe Webhook Secret</label>
+                        <input type="password" name="stripeWebhookSecret" id="stripeWebhookSecret" placeholder="whsec_..." value="{{ env("STRIPE_WEBHOOK_SECRET") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                    </div>
+                    <div>
+                        <label for="stripeDefaultCurrency" class="block text-sm font-medium text-gray-700 mb-1.5">Default Currency</label>
+                        <input type="text" name="stripeDefaultCurrency" id="stripeDefaultCurrency" placeholder="eur" value="{{ env("STRIPE_DEFAULT_CURRENCY") }}" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
                     </div>
                 </div>
             </div>

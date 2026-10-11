@@ -1,0 +1,108 @@
+{% extends "app/template.twig" %}
+
+{% block page %}Subscription Details{% endblock %}
+
+{% block content %}
+    <main class="p-8">
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Subscription Details</h2>
+                <p class="text-sm text-gray-500 mt-1">Stripe subscription overview, invoices and cancellation actions.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/app/billing/subscriptions" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Back</a>
+                {% if subscription.status != 'canceled' %}
+                    <form method="POST" action="/app/billing/subscriptions/{{ subscription.id }}/cancel" onsubmit="return confirm('Cancel this subscription in Stripe?');">
+                        <input type="hidden" name="__token" value="{{ csrf() }}">
+                        <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition">Cancel Subscription</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">{{ error }}</div>
+        {% endif %}
+        {% if success %}
+            <div class="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">{{ success }}</div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-xl border border-gray-200 p-6 lg:col-span-2">
+                <h3 class="text-sm font-semibold text-gray-900 mb-4">Subscription Information</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">ID</p><p class="text-gray-900 mt-1 font-mono">{{ subscription.id }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Status</p><p class="text-gray-900 mt-1">{{ subscription.status|upper }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Customer</p><p class="text-gray-900 mt-1">{{ subscription.customer.name }}</p><p class="text-xs text-gray-500">{{ subscription.customer.email }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Product</p><p class="text-gray-900 mt-1">{{ subscription.productName|default('—') }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Amount</p><p class="text-gray-900 mt-1">{% if subscription.priceAmountFormatted %}{{ subscription.priceAmountFormatted }} {{ subscription.currency|upper }}{% else %}—{% endif %}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Interval</p><p class="text-gray-900 mt-1">{{ subscription.interval|default('—') }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Latest Invoice</p><p class="text-gray-900 mt-1">{{ subscription.latestInvoiceId|default('—') }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Current Period Start</p><p class="text-gray-900 mt-1">{{ subscription.currentPeriodStart|default('—') }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Current Period End</p><p class="text-gray-900 mt-1">{{ subscription.currentPeriodEnd|default('—') }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Cancel at Period End</p><p class="text-gray-900 mt-1">{{ subscription.cancelAtPeriodEnd ? 'Yes' : 'No' }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Trial End</p><p class="text-gray-900 mt-1">{{ subscription.trialEnd|default('—') }}</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-gray-500">Canceled At</p><p class="text-gray-900 mt-1">{{ subscription.canceledAt|default('—') }}</p></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 class="text-sm font-semibold text-gray-900 mb-4">Linked Local Licenses</h3>
+                <div class="space-y-3">
+                    {% for license in localLicenses %}
+                        <a href="/app/licenses/{{ license.id }}" class="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
+                            <div class="text-sm font-medium text-gray-900">{{ license.key }}</div>
+                            <div class="text-xs text-gray-500 mt-1">Status: {{ license.status.value|capitalize }}</div>
+                        </a>
+                    {% else %}
+                        <p class="text-sm text-gray-500">No local licenses are linked to this subscription.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900">Invoices</h3>
+            </div>
+            <table class="w-full">
+                <thead>
+                <tr class="border-b border-gray-200 bg-gray-50/50">
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Invoice</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Customer</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Amount</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Created</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                {% for payment in invoices %}
+                    <tr>
+                        <td class="px-5 py-3">
+                            <div class="text-sm font-medium text-gray-900">{{ payment.number|default(payment.id) }}</div>
+                            <div class="text-xs text-gray-500 font-mono">{{ payment.id }}</div>
+                        </td>
+                        <td class="px-5 py-3">
+                            <div class="text-sm font-medium text-gray-900">{{ payment.customer.name }}</div>
+                            <div class="text-xs text-gray-500">{{ payment.customer.email }}</div>
+                        </td>
+                        <td class="px-5 py-3 text-sm text-gray-700">{{ payment.amountPaidFormatted }} {{ payment.currency }}</td>
+                        <td class="px-5 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium {% if payment.refunded %}bg-yellow-50 text-yellow-700{% else %}bg-green-50 text-green-700{% endif %}">
+                                {{ payment.refunded ? 'REFUNDED' : payment.status|upper }}
+                            </span>
+                        </td>
+                        <td class="px-5 py-3 text-sm text-gray-700">{{ payment.createdAt|default('—') }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="px-5 py-10 text-center text-sm text-gray-500">No invoices found for this subscription.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+{% endblock %}
+
+

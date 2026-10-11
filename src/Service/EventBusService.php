@@ -31,6 +31,11 @@ class EventBusService
      */
     public function triggerEvent(EventNameEnum $event, array $data): void
     {
+        if (!$this->entityManager->isOpen()) {
+            error_log(sprintf('EventBusService skipped event [%s] because EntityManager is closed.', $event->value));
+            return;
+        }
+
         // events json needs to contain our string $event
         $webhooks = $this->webhookRepository->createQueryBuilder('w')
             ->where('JSON_CONTAINS(w.events, :event) = 1')
@@ -44,22 +49,38 @@ class EventBusService
          * @var Webhook $webhook
          */
         foreach ($webhooks as $webhook) {
-            $webhookDelivery = new WebhookDelivery();
-            $webhookDelivery->setWebhook($webhook)
-                ->setStatus(WebhookDeliveryStatusEnum::await_delivery)
-                ->setRequestHeaders($webhook->getHeaders())
-                ->setRequestBody($this->webhookFactory->create($webhook->getType(), $data, $event, $webhook, $webhookDelivery->getId()))
-                ->setEventName($event)
-                ->setSignature(
-                    $this->webhookFactory->createSignature(
-                        $webhookDelivery->getRequestBody(),
-                        $webhook->getSecret()
-                    )
-                );
+            try {
+                if (!$this->entityManager->isOpen()) {
+                    error_log(sprintf('EventBusService stopped event [%s] because EntityManager was closed mid-flight.', $event->value));
+                    return;
+                }
 
-            $this->entityManager->persist($webhookDelivery);
+                $webhookDelivery = new WebhookDelivery();
+                $webhookDelivery->setWebhook($webhook)
+                    ->setStatus(WebhookDeliveryStatusEnum::await_delivery)
+                    ->setRequestHeaders($webhook->getHeaders())
+                    ->setRequestBody($this->webhookFactory->create($webhook->getType(), $data, $event, $webhook, $webhookDelivery->getId()))
+                    ->setEventName($event)
+                    ->setSignature(
+                        $this->webhookFactory->createSignature(
+                            $webhookDelivery->getRequestBody(),
+                            $webhook->getSecret()
+                        )
+                    );
+
+                $this->entityManager->persist($webhookDelivery);
+                $this->entityManager->flush();
+            } catch (Throwable $exception) {
+                error_log(sprintf(
+                    'EventBusService failed for event [%s]: %s',
+                    $event->value,
+                    $exception->getMessage()
+                ));
+
+                if (!$this->entityManager->isOpen()) {
+                    return;
+                }
+            }
         }
-
-        $this->entityManager->flush();
     }
 }

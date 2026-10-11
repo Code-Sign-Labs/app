@@ -66,6 +66,14 @@ class AuthenticationCredentials
     /**
      * @return string
      */
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    /**
+     * @return string
+     */
     public function getHost(): string
     {
         return $this->host;

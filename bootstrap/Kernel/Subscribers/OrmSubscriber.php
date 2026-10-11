@@ -36,6 +36,7 @@ class OrmSubscriber implements KernelEventSubscriberInterface
             $config = ORMSetup::createAttributeMetadataConfiguration(
                 paths: [$namespaceConfig->get('namespace.entity.path')],
                 isDevMode: true,
+                proxyDir: __DIR__ . '/../../../storage/cache/doctrine_proxies'
             );
 
             $config->addCustomStringFunction(JsonContains::FUNCTION_NAME, JsonContains::class);

@@ -5,13 +5,17 @@ namespace App\Controller\App;
 use App\Controller\CoreAbstractController;
 use App\Entity\Activation;
 use App\Entity\Batch;
+use App\Entity\Customer;
 use App\Entity\LicenseKey;
 use App\Entity\Product;
 use App\Enum\EventNameEnum;
+use App\Enum\LicenseKeyBillingTypeEnum;
 use App\Enum\LicenseKeyStatusEnum;
 use App\Enum\LicenseKeyTypeEnum;
 use App\Service\ConfigService;
 use App\Service\EventBusService;
+use App\Service\MailingService;
+use App\Service\StripeService;
 use DateTime;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
@@ -20,15 +24,22 @@ use Framework\Http\Objects\Request;
 use Framework\Http\Objects\Response;
 use Framework\Http\Validators\CSRFValidator;
 use Framework\Http\ViewEngine\ViewEngineInterface;
+use Framework\Messenger\MessageDispatcher;
 use Random\RandomException;
 use Throwable;
 
 class LicenseController extends CoreAbstractController
 {
+    public const STRIPE_DEFAULT_CURRENCY = 'eur';
+
+    protected StripeService $stripeService;
     protected CSRFValidator $CSRFValidator;
     protected ConfigService $configService;
-    public function __construct(ViewEngineInterface $viewEngine, EntityManager $entityManager)
+    protected MailingService $mailingService;
+    public function __construct(ViewEngineInterface $viewEngine, EntityManager $entityManager, protected MessageDispatcher $dispatcher)
     {
+        $this->mailingService = new MailingService($this->dispatcher);
+        $this->stripeService = new StripeService();
         $this->configService = new ConfigService($entityManager);
         $this->CSRFValidator = new CSRFValidator();
         parent::__construct($viewEngine, $entityManager);
@@ -159,7 +170,49 @@ class LicenseController extends CoreAbstractController
             'error' => $error,
             'products' => $productRepository->findAll(),
             'productId' => $productId,
+            'customers' => $this->entityManager->getRepository(Customer::class)->findAll(),
         ]);
+    }
+
+    /**
+     * @param string $dateString
+     * @return DateTime
+     * @throws \Exception
+     */
+    protected function parseDate(string $dateString): DateTime
+    {
+        $dateString = trim($dateString);
+
+        // Format: YYYY-MM-DD
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateString)) {
+            return DateTime::createFromFormat('Y-m-d', $dateString);
+        }
+
+        // Format: YYYY-MM-DD HH:MM:SS
+        if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $dateString)) {
+            return DateTime::createFromFormat('Y-m-d H:i:s', $dateString);
+        }
+
+        // Format: DD/MM/YYYY
+        if (preg_match('#^\d{2}/\d{2}/\d{4}$#', $dateString)) {
+            $date = DateTime::createFromFormat('d/m/Y', $dateString);
+            $date->setTime(0, 0, 0);
+            return $date;
+        }
+
+        // Format: MM/DD/YYYY
+        if (preg_match('#^\d{2}/\d{2}/\d{4}$#', $dateString)) {
+            $date = DateTime::createFromFormat('m/d/Y', $dateString);
+            $date->setTime(0, 0, 0);
+            return $date;
+        }
+
+        $date = new DateTime($dateString);
+        if (!$date) {
+            throw new \Exception("Invalid date format: " . $dateString);
+        }
+
+        return $date;
     }
 
     /**
@@ -176,9 +229,19 @@ class LicenseController extends CoreAbstractController
         $user = $request->getAttributes()['user'];
         $product = $request->getBody("product");
         $type = $request->getBody("type");
+        $customerId = $request->getBody("customer_id");
 
-        if(!$product || !$type) {
-            $this->setFlash($request, "license.create.error", "Product and type are required.");
+        if(!$product || !$type || !$customerId) {
+            $this->setFlash($request, "license.create.error", "Product, customer and type are required.");
+            return $this->redirect("/app/license-new");
+        }
+
+        $customerRepository = $this->entityManager->getRepository(Customer::class);
+        $customer = $customerRepository->findOneBy([
+            'id' => $customerId
+        ]);
+        if(!$customer || !$customer->getStripeCustomerId()) {
+            $this->setFlash($request, "license.create.error", "Customer not found.");
             return $this->redirect("/app/license-new");
         }
 
@@ -191,23 +254,80 @@ class LicenseController extends CoreAbstractController
             return $this->redirect("/app/license-new");
         }
 
-        $maxActivations = $request->getBody("max_activations");
-        $expiresAt = $request->getBody("expires_at");
-        $notes = $request->getBody("notes");
+        $maxActivations = intval($request->getBody("max_activations", 1));
+        $trialExpiration = intval($request->getBody("trial_expiration", 0)); // days
+        $billingType = $request->getBody("billing_type");
+        if($type !== "perpetual" && !$billingType) {
+            $this->setFlash($request, "license.create.error", "Billing type is required for non-perpetual licenses.");
+            return $this->redirect("/app/license-new");
+        }
+        if($billingType !== 'day' && $billingType !== 'week' && $billingType !== 'month' && $billingType !== 'year') {
+            $this->setFlash($request, "license.create.error", "Billing type must be one of: day, week, month, year.");
+            return $this->redirect("/app/license-new");
+        }
 
+        $notes = $request->getBody("notes");
 
         $batchName = $request->getbody("batch");
         $batchQuantity = $request->getbody("batch_quantity");
 
         try {
+            $batch = null;
+            $licenseKey = null;
+
+            $productStripe = $this->stripeService->getProduct($product->getStripeProductId());
+            $price = $this->stripeService->getPrice($productStripe->default_price);
+
+            if(LicenseKeyTypeEnum::from($type) === LicenseKeyTypeEnum::subscription) {
+                $subscription = $this->stripeService->getClient()->subscriptions->create([
+                    'customer' => $customer->getStripeCustomerId(),
+                    'items' => [
+                        [
+                            'price_data' => [
+                                'unit_amount' => $price->unit_amount,
+                                'currency' => $_ENV["STRIPE_DEFAULT_CURRENCY"] ?? self::STRIPE_DEFAULT_CURRENCY,
+                                'product' => $product->getStripeProductId(),
+                                'recurring' => [
+                                    'interval' => $billingType,
+                                ],
+                            ]
+                        ]
+                    ],
+                    'metadata' => [
+                        'product_id' => $product->getId(),
+                    ]
+                ]);
+            }
+
+            if(LicenseKeyTypeEnum::from($type) === LicenseKeyTypeEnum::trial) {
+                $subscription = $this->stripeService->getClient()->subscriptions->create([
+                    'customer' => $customer->getStripeCustomerId(),
+                    'items' => [
+                        [
+                            'price_data' => [
+                                'unit_amount' => $price->unit_amount,
+                                'currency' => $_ENV["STRIPE_DEFAULT_CURRENCY"] ?? self::STRIPE_DEFAULT_CURRENCY,
+                                'product' => $product->getStripeProductId(),
+                                'recurring' => [
+                                    'interval' => $billingType
+                                ],
+                            ]
+                        ]
+                    ],
+                    'metadata' => [
+                        'product_id' => $product->getId(),
+                    ],
+                    'trial_period_days' => $trialExpiration,
+                ]);
+            }
+
             if($batchName && $batchQuantity) {
                 $batch = new Batch();
                 $batch->setLabel($batchName)
                     ->setType(LicenseKeyTypeEnum::from($type))
-                    ->setExpiresAt($expiresAt ? new DateTime($expiresAt) : null)
                     ->setProduct($product)
                     ->setExportedAt(new DateTime())
-                    ->setMaxActivations($maxActivations ?? 1)
+                    ->setMaxActivations($maxActivations)
                     ->setQuantity((int) $batchQuantity);
                 $this->entityManager->persist($batch);
 
@@ -215,12 +335,19 @@ class LicenseController extends CoreAbstractController
                     $licenseKey = new LicenseKey();
                     $licenseKey->setProduct($product)
                         ->setType(LicenseKeyTypeEnum::from($type))
-                        ->setMaxActivations($maxActivations ?? 1)
-                        ->setExpiresAt($expiresAt ? new DateTime($expiresAt) : null)
+                        ->setMaxActivations($maxActivations)
+                        ->setExpiresAt(null) // Needs to be calculated based on time when the license is activated
                         ->setNotes($notes)
                         ->setStatus(LicenseKeyStatusEnum::active)
                         ->setKey($this->generateLicenseKey())
-                        ->setBatch($batch);
+                        ->setStripeSubscriptionId($subscription->id ?? null)
+                        ->setBatch($batch)
+                        ->setCustomer($customer)
+                        ->setBillingType(LicenseKeyBillingTypeEnum::from($billingType));
+
+                    if(LicenseKeyTypeEnum::from($type) === LicenseKeyTypeEnum::subscription) {
+                        $licenseKey->setStatus(LicenseKeyStatusEnum::awaiting_payment);
+                    }
 
                     $this->entityManager->persist($licenseKey);
                 }
@@ -228,14 +355,22 @@ class LicenseController extends CoreAbstractController
                 $licenseKey = new LicenseKey();
                 $licenseKey->setProduct($product)
                     ->setType(LicenseKeyTypeEnum::from($type))
-                    ->setMaxActivations($maxActivations ?? 1)
-                    ->setExpiresAt($expiresAt ? new DateTime($expiresAt) : null)
+                    ->setMaxActivations($maxActivations)
+                    ->setExpiresAt(null) // Needs to be calculated based on time when the license is activated
                     ->setNotes($notes)
                     ->setStatus(LicenseKeyStatusEnum::active)
-                    ->setKey($this->generateLicenseKey());
+                    ->setStripeSubscriptionId($subscription->id ?? null)
+                    ->setKey($this->generateLicenseKey())
+                    ->setCustomer($customer)
+                    ->setBillingType(LicenseKeyBillingTypeEnum::from($billingType));
+
+                if(LicenseKeyTypeEnum::from($type) === LicenseKeyTypeEnum::subscription) {
+                    $licenseKey->setStatus(LicenseKeyStatusEnum::awaiting_payment);
+                }
 
                 $this->entityManager->persist($licenseKey);
             }
+
             $this->entityManager->flush();
 
             if($batch) {
@@ -250,8 +385,30 @@ class LicenseController extends CoreAbstractController
                 $this->auditLogService->log("license.create.success", [
                     'user_agent' => $request->getHeader("User-Agent"),
                     'ip' => $request->getUserIp()
-                ], "Batch with id {$batch->getId()} has been created", $user);
+                ], "Batch with id {$batch->getId()} has been created", $user, product: $product);
                 $this->setFlash($request, "license.list.success", "License keys created successfully. Batch: {$batch->getLabel()}");
+
+                $this->mailingService->sendMail(
+                    "email/batch_created",
+                    "New License Batch Created",
+                    $customer->getEmail(),
+                    [
+                        'batch' => [
+                            'maxActivations' => $batch->getMaxActivations(),
+                            'quantity' => $batch->getQuantity(),
+                            'licenseKeys' => array_map(static fn (LicenseKey $licenseKey) => [
+                                'licenseKey' => $licenseKey->getKey(),
+                                'status' => ['value' => $licenseKey->getStatus()->value],
+                            ], $batch->getLicenseKeys()->toArray()),
+                        ],
+                        'product' => [
+                            'name' => $product->getName(),
+                        ],
+                        'customer' => [
+                            'label' => $customer->getLabel(),
+                        ],
+                    ]
+                );
             } else {
                 $this->eventBusService->triggerEvent(EventNameEnum::LICENSE_CREATE_SUCCESS, [
                     "licenseKey" => $licenseKey->getKey(),
@@ -264,8 +421,27 @@ class LicenseController extends CoreAbstractController
                 $this->auditLogService->log("license.create.success", [
                     'user_agent' => $request->getHeader("User-Agent"),
                     'ip' => $request->getUserIp()
-                ], "License with id {$licenseKey->getId()} has been created", $user);
+                ], "License with id {$licenseKey->getId()} has been created", $user, product: $product);
                 $this->setFlash($request, "license.list.success", "License key created successfully. License key: {$licenseKey->getKey()}");
+
+                $this->mailingService->sendMail(
+                    "email/license_created",
+                    "New License Key Created",
+                    $customer->getEmail(),
+                    [
+                        'license' => [
+                            'maxActivations' => $licenseKey->getMaxActivations(),
+                            'licenseKey' => $licenseKey->getKey(),
+                            'status' => ['value' => $licenseKey->getStatus()->value],
+                        ],
+                        'product' => [
+                            'name' => $product->getName(),
+                        ],
+                        'customer' => [
+                            'label' => $customer->getLabel(),
+                        ],
+                    ]
+                );
             }
 
             return $this->redirect("/app/licenses");
@@ -280,7 +456,7 @@ class LicenseController extends CoreAbstractController
             $this->auditLogService->log("license.create.failure", [
                 'user_agent' => $request->getHeader("User-Agent"),
                 'ip' => $request->getUserIp()
-            ], "License has failed to be created", $user);
+            ], "License has failed to be created", $user, product: $product);
 
             $this->setFlash($request, "license.create.error", "An error occurred while creating the license key: " . $e->getMessage());
             return $this->redirect("/app/license-new");
@@ -420,6 +596,12 @@ class LicenseController extends CoreAbstractController
         return $this->redirect("/app/licenses/{$licenseId}");
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
     public function delete(Request $request): Response
     {
         $user = $request->getAttributes()['user'];

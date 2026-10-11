@@ -32,16 +32,25 @@ class AuditLogService
      */
     public function log(string $event, array $data, string $desc, ?User $user = null, ?LicenseKey $licenseKey = null, ?Product $product = null): void
     {
-        $log = new AuditLog();
-        $log->setEvent($event)
-            ->setUser($user)
-            ->setLicenseKey($licenseKey)
-            ->setMetadata($data)
-            ->setProduct($product)
-            ->setDescription($desc);
+        if (!$this->entityManager->isOpen()) {
+            error_log(sprintf('AuditLogService skipped event [%s] because EntityManager is closed.', $event));
+            return;
+        }
 
-        $this->entityManager->persist($log);
-        $this->entityManager->flush();
+        try {
+            $log = new AuditLog();
+            $log->setEvent($event)
+                ->setUser($user)
+                ->setLicenseKey($licenseKey)
+                ->setMetadata($data)
+                ->setProduct($product)
+                ->setDescription($desc);
+
+            $this->entityManager->persist($log);
+            $this->entityManager->flush();
+        } catch (Throwable $exception) {
+            error_log(sprintf('AuditLogService failed for event [%s]: %s', $event, $exception->getMessage()));
+        }
     }
 
     /**

@@ -14,7 +14,7 @@ class HttpErrorHandler implements ErrorHandlerInterface
      */
     public static function handleError(ErrorObject $errorObject): void
     {
-        @file_put_contents(__DIR__ . '/../../../storage/logs/error.log', "[{$errorObject->getRequestUri()}] {" . $errorObject->getFile() . "} {" . $errorObject->getLine() . "} " .  $errorObject->getmessage() . "\n", FILE_APPEND);
+        @file_put_contents(__DIR__ . '/../../../storage/logs/error.log', "[{$errorObject->getRequestUri()}] {" . $errorObject->getFile() . "} {" . $errorObject->getLine() . "} " .  $errorObject->getMessage() . " [" . $errorObject->getTrace() . "]\n", FILE_APPEND);
 
         // In testing mode throw an exception so test runner can catch and present
         // a clean, concise message instead of raw dumps.

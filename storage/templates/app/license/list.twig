@@ -36,6 +36,7 @@
                 <option value="all" {% if filters.status == "all" %}selected{% endif %}>All Status</option>
                 <option value="active" {% if filters.status == "active" %}selected{% endif %}>Active</option>
                 <option value="suspended" {% if filters.status == "suspended" %}selected{% endif %}>Suspended</option>
+                <option value="awaiting_payment" {% if filters.status == "awaiting_payment" %}selected{% endif %}>Awaiting Payment</option>
                 <option value="expired" {% if filters.status == "expired" %}selected{% endif %}>Expired</option>
                 <option value="revoked" {% if filters.status == "revoked" %}selected{% endif %}>Revoked</option>
             </select>

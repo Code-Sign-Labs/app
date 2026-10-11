@@ -78,6 +78,16 @@ class SettingsController extends CoreAbstractController
     }
 
     /**
+     * @param $currency
+     * @return false|int
+     */
+    protected function isValidCurrencyFormat($currency): false|int
+    {
+        // ISO 4217 currency codes are 3 letters
+        return preg_match('/^[A-Z]{3}$/i', $currency);
+    }
+
+    /**
      * @param Request $request
      * @return Response
      * @throws ORMException
@@ -136,6 +146,28 @@ class SettingsController extends CoreAbstractController
 
         if($timeWindowRateLimiting && $timeWindowRateLimiting !== $_ENV["RATE_LIMITER_TIME_WINDOW"]) {
             $updateEnv["RATE_LIMITER_TIME_WINDOW"] = $timeWindowRateLimiting;
+        }
+
+        $stripePublishableKey = $request->getBody("stripePublishableKey");
+        $stripeSecretKey = $request->getBody("stripeSecretKey");
+        $stripeWebhookSecret = $request->getBody("stripeWebhookSecret");
+        $stripeDefaultCurrency = $request->getBody("stripeDefaultCurrency");
+
+        if($stripePublishableKey && $_ENV["STRIPE_PUBLISHABLE_KEY"] !== $stripePublishableKey) {
+            $updateEnv["STRIPE_PUBLISHABLE_KEY"] = $stripePublishableKey;
+        }
+
+        if($stripeSecretKey && $_ENV["STRIPE_SECRET_KEY"] !== $stripeSecretKey) {
+            $updateEnv["STRIPE_SECRET_KEY"] = $stripeSecretKey;
+        }
+
+        if($stripeWebhookSecret && $_ENV["STRIPE_WEBHOOK_SECRET"] !== $stripeWebhookSecret) {
+            $updateEnv["STRIPE_WEBHOOK_SECRET"] = $stripeWebhookSecret;
+        }
+
+
+        if($stripeDefaultCurrency && $this->isValidCurrencyFormat($stripeDefaultCurrency) && $_ENV["STRIPE_DEFAULT_CURRENCY"] !== $stripeDefaultCurrency) {
+            $updateEnv["STRIPE_DEFAULT_CURRENCY"] = $stripeDefaultCurrency;
         }
 
         $hashingIpAllowlist = $request->getBody("hashingIpAllowlist");

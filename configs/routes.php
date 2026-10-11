@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 use App\Controller\API\v1\CertificateController;
 use App\Controller\API\v1\LicenseApiController;
+use App\Controller\API\v2\StripeWebhookController;
+use App\Controller\App\Billing\CustomersController;
+use App\Controller\App\Billing\PaymentsController;
+use App\Controller\App\Billing\SubscriptionsController;
 use App\Controller\App\CertificatesController;
 use App\Controller\App\HomeController;
 use App\Controller\App\LicenseController;
@@ -78,6 +82,23 @@ $routeTable->addRoute("/app/settings", "POST", SettingsController::class . "@upd
 $routeTable->addRoute("/app/certs", "GET", CertificatesController::class . "@index", firewall: IsLoggedFirewall::class);
 $routeTable->addRoute("/app/certs", "POST", CertificatesController::class . "@rotate", firewall: IsLoggedFirewall::class);
 
+// Billing
+
+$routeTable->addRoute("/app/billing/customers", "GET", CustomersController::class . "@list", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/billing/customers-new", "GET", CustomersController::class . "@indexCreate", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/billing/customers-new", "POST", CustomersController::class . "@create", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/billing/customers/<id>", "GET", CustomersController::class . "@details", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/billing/customers/<id>/edit", "GET", CustomersController::class . "@indexEdit", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/billing/customers/<id>/edit", "POST", CustomersController::class . "@edit", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/billing/customers/<id>/delete", "GET", CustomersController::class . "@delete", firewall: IsLoggedFirewall::class);
+
+$routeTable->addRoute("/app/billing/subscriptions", "GET", SubscriptionsController::class . "@list", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/billing/subscriptions/<subscriptionId>", "GET", SubscriptionsController::class . "@details", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/billing/subscriptions/<subscriptionId>/cancel", "POST", SubscriptionsController::class . "@cancel", firewall: IsLoggedFirewall::class);
+
+$routeTable->addRoute("/app/billing/payments", "GET", PaymentsController::class . "@list", firewall: IsLoggedFirewall::class);
+$routeTable->addRoute("/app/billing/payments/<invoiceId>/refund", "POST", PaymentsController::class . "@refund", firewall: IsLoggedFirewall::class);
+
 // Public API routes
 
 $routeTable->addRoute("/api/v1/public-key", "GET", CertificateController::class . "@getPublicKey", firewall: RateLimiterFirewall::class);
@@ -87,6 +108,8 @@ $routeTable->addRoute("/api/v1/licenses/<license_key>", "GET", LicenseApiControl
 $routeTable->addRoute("/api/v1/licenses/<license_key>/devices", "GET", LicenseApiController::class . "@devices", firewall: RateLimiterFirewall::class);
 $routeTable->addRoute("/api/v1/licenses/<license_key>/activate", "POST", LicenseApiController::class . "@activate", firewall: RateLimiterFirewall::class);
 $routeTable->addRoute("/api/v1/licenses/<license_key>/deactivate", "POST", LicenseApiController::class . "@deactivate", firewall: RateLimiterFirewall::class);
+
+$routeTable->addRoute("/api/v2/billing/stripe/webhook", "POST", StripeWebhookController::class . "@webhook");
 
 $routeTable->setNotFoundController(NotFoundController::class);
 
