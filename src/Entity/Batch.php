@@ -4,10 +4,12 @@ namespace App\Entity;
 
 use App\Enum\LicenseKeyTypeEnum;
 use DateTime;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
 use Doctrine\ORM\Mapping\Id;
 use Doctrine\ORM\Mapping\ManyToOne;
+use Doctrine\ORM\Mapping\OneToMany;
 use Doctrine\ORM\Mapping\Table;
 use Ramsey\Uuid\Uuid;
 
@@ -34,14 +36,14 @@ class Batch
     #[Column(name: "max_activations", type: 'integer', options: ['default' => 1])]
     protected int $maxActivations = 1;
 
-    #[Column(name: "expires_at", type: 'datetime', nullable: true)]
-    protected ?DateTime $expiresAt;
-
     #[Column(name: "exported_at", type: 'datetime', nullable: true)]
     protected ?DateTime $exportedAt = null;
 
     #[Column(name: "created_at", type: 'datetime')]
     protected DateTime $createdAt;
+
+    #[OneToMany(targetEntity: LicenseKey::class, mappedBy: "batch")]
+    protected Collection $licenseKeys;
 
     public function __construct()
     {
@@ -160,24 +162,6 @@ class Batch
     /**
      * @return DateTime|null
      */
-    public function getExpiresAt(): ?DateTime
-    {
-        return $this->expiresAt;
-    }
-
-    /**
-     * @param DateTime|null $expiresAt
-     * @return Batch
-     */
-    public function setExpiresAt(?DateTime $expiresAt): Batch
-    {
-        $this->expiresAt = $expiresAt;
-        return $this;
-    }
-
-    /**
-     * @return DateTime|null
-     */
     public function getExportedAt(): ?DateTime
     {
         return $this->exportedAt;
@@ -208,6 +192,24 @@ class Batch
     public function setCreatedAt(DateTime $createdAt): Batch
     {
         $this->createdAt = $createdAt;
+        return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getLicenseKeys(): Collection
+    {
+        return $this->licenseKeys;
+    }
+
+    /**
+     * @param Collection $licenseKeys
+     * @return Batch
+     */
+    public function setLicenseKeys(Collection $licenseKeys): Batch
+    {
+        $this->licenseKeys = $licenseKeys;
         return $this;
     }
 }

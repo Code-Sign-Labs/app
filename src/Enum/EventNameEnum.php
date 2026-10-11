@@ -41,4 +41,10 @@ enum EventNameEnum: string
     case WEBHOOK_DELETE_SUCCESS = 'webhook.delete.success'; // done
     case WEBHOOK_DELETE_FAILURE = 'webhook.delete.failure'; // done
     case SYSTEM_KEYS_ROTATE_SUCCESS = 'system.keys.rotate.success'; // done
+    case CUSTOMER_CREATE_SUCCESS = "customer.create.success"; // done
+    case CUSTOMER_CREATE_FAILURE = "customer.create.failure"; // done
+    case CUSTOMER_DELETE_SUCCESS = "customer.delete.success"; // done
+    case CUSTOMER_DELETE_FAILURE = "customer.delete.failure"; // done
+    case CUSTOMER_EDIT_SUCCESS = "customer.edit.success"; // done
+    case CUSTOMER_EDIT_FAILURE = "customer.edit.failure"; // done
 }

@@ -47,7 +47,7 @@ class PHPMailer implements MailerStrategyInterface
         $mailInstance->Host = $authenticationCredentials->getHost();
         $mailInstance->Port = $authenticationCredentials->getPort();
         $mailInstance->Username = $authenticationCredentials->getUsername();
-        $mailInstance->Password = $authenticationCredentials->getUsername();
+        $mailInstance->Password = $authenticationCredentials->getPassword();
         $encryptionType = $authenticationCredentials->getEncryptionType();
         if($encryptionType !== 'ssl' && $encryptionType !== 'tls') {
             throw new Exception("Invalid Encryption Type");
@@ -84,7 +84,7 @@ class PHPMailer implements MailerStrategyInterface
         $mailInstance->isHTML(true);
         $mailInstance->Subject = $subject;
         $mailInstance->Body = $this->viewEngine->render($templateName, $templateVariables);
-        $mailInstance->AltBody = $altMessage ?? MailerEnum::HTML_RENDER_ERROR;
+        $mailInstance->AltBody = trim($altMessage) !== '' ? $altMessage : trim(strip_tags($mailInstance->Body));
 
         // Sent Email
         $mailInstance->send();

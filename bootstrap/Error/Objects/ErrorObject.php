@@ -13,6 +13,7 @@ class ErrorObject
     protected string $method;
     protected array $headers;
     protected array $body;
+    protected string $trace;
     public function __construct(
         int $severity,
         string $message,
@@ -21,7 +22,8 @@ class ErrorObject
         string $requestUri,
         string $method,
         array $headers,
-        array $body
+        array $body,
+        string $trace
     ) {
         $this->severity = $severity;
         $this->message = $message;
@@ -31,6 +33,7 @@ class ErrorObject
         $this->method = $method;
         $this->headers = $headers;
         $this->body = $body;
+        $this->trace = $trace;
     }
 
     /**
@@ -95,5 +98,13 @@ class ErrorObject
     public function getBody(): array
     {
         return $this->body;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTrace(): string
+    {
+        return $this->trace;
     }
 }

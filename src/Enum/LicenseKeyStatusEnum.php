@@ -8,4 +8,5 @@ enum LicenseKeyStatusEnum: string
     case revoked = "revoked";
     case expired = "expired";
     case suspended = "suspended";
+    case awaiting_payment = "awaiting_payment";
 }

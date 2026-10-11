@@ -63,6 +63,10 @@
                             <p class="text-sm text-gray-900 mt-1">{{ license.type.value|capitalize }}</p>
                         </div>
                         <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Customer</p>
+                            <p class="text-sm text-gray-900 mt-1"><a href="/app/billing/customers/{{ license.customer.id }}" class="text-brand hover:text-brand-hover">{{ license.customer.label }}</a></p>
+                        </div>
+                        <div>
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Product</p>
                             <p class="text-sm text-gray-900 mt-1"><a href="/app/products/{{ license.product.slug }}" class="text-brand hover:text-brand-hover">{{ license.product.name }}</a></p>
                         </div>

@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Enum\ProductStatusEnum;
 use DateTime;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
@@ -38,17 +39,25 @@ class Product
     #[Column(name: "created_at", type: 'datetime')]
     protected DateTime $createdAt;
 
+    #[Column(name: "stripe_product_id", type: 'string', nullable: true)]
+    protected ?string $stripeProductId = null;
+
     #[Column(name: "updated_at", type: 'datetime')]
     protected DateTime $updatedAt;
 
     #[ORM\OneToMany(targetEntity: LicenseKey::class, mappedBy: 'product', orphanRemoval: true)]
     protected Collection $licenses;
 
+    #[ORM\OneToMany(targetEntity: Batch::class, mappedBy: 'product', orphanRemoval: true)]
+    protected Collection $batches;
+
     public function __construct()
     {
         $this->id = Uuid::uuid4()->toString();
         $this->createdAt = new DateTime();
         $this->updatedAt = new DateTime();
+        $this->licenses = new ArrayCollection();
+        $this->batches = new ArrayCollection();
     }
 
     /**
@@ -204,12 +213,30 @@ class Product
     }
 
     /**
+     * @return Collection
+     */
+    public function getBatches(): Collection
+    {
+        return $this->batches;
+    }
+
+    /**
      * @param Collection $licenses
-     * @return Product
+     C* @return Product
      */
     public function setLicenses(Collection $licenses): Product
     {
         $this->licenses = $licenses;
+        return $this;
+    }
+
+    /**
+     * @param Collection $batches
+     * @return Product
+     */
+    public function setBatches(Collection $batches): Product
+    {
+        $this->batches = $batches;
         return $this;
     }
 
@@ -219,5 +246,23 @@ class Product
     public function __toString(): string
     {
         return "pr_" . $this->id . "_" . $this->version;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getStripeProductId(): ?string
+    {
+        return $this->stripeProductId;
+    }
+
+    /**
+     * @param string|null $stripeProductId
+     * @return Product
+     */
+    public function setStripeProductId(?string $stripeProductId): Product
+    {
+        $this->stripeProductId = $stripeProductId;
+        return $this;
     }
 }

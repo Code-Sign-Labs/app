@@ -36,7 +36,8 @@ class EmailHandler implements MessageHandlerInterface
             $mail->isHTML(true);
             $mail->Subject = $additionalData['subject'];
             $mail->Body    = $twig->render($additionalData['template'] . '.twig', $additionalData['variables']);
-            $mail->AltBody = $twig->render($additionalData['template'] . '_alt.twig', $additionalData['variables']);
+            $altBody = $twig->render($additionalData['template'] . '_alt.twig', $additionalData['variables']);
+            $mail->AltBody = trim($altBody) !== '' ? $altBody : trim(strip_tags($mail->Body));
 
             $mail->send();
 

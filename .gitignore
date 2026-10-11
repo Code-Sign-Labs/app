@@ -6,6 +6,8 @@ storage/keys/*
 storage/.migrations_completed
 !storage/files/uploads/.gitkeep
 !storage/cache/.gitkeep
+storage/cache/doctrine_proxies
+!storage/cache/doctrine_proxies/.gitkeep
 !storage/logs/.gitkeep
 !storage/files/.gitkeep
 !storage/keys/.gitkeep

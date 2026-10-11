@@ -113,6 +113,14 @@
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Version</p>
                             <p class="text-sm text-gray-900 mt-1">v{{ product.version }}</p>
                         </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Stripe Product</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ product.stripeProductId }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Price</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ price }} {{ env("STRIPE_DEFAULT_CURRENCY")|upper }}</p>
+                        </div>
                     </div>
                 </div>
 
