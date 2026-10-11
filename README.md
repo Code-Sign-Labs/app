@@ -1,3 +1,5 @@
+![Code Sign Banner](code_sign_banner.png)
+
 # Code Sign App
 
 This is an official repository for the Code Sign App, a tool designed to help developers manage their licensing and code signing processes more efficiently.
