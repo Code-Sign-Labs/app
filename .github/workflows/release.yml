@@ -21,40 +21,33 @@ jobs:
       - name: Determine next version
         id: version
         run: |
-          LAST_TAG=$(git tag --sort=-v:refname | head -n 1)
+          INITIAL_VERSION="1.0.0"
+          LAST_TAG=$(git tag -l 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+
           if [ -z "$LAST_TAG" ]; then
-            LAST_TAG="0.0.0"
-          fi
-          echo "Last tag: $LAST_TAG"
-          
-          COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
-          
-          MAJOR=0
-          MINOR=0
-            PATCH=0
-          
-          if echo "$COMMITS" | grep -qE "BREAKING CHANGE|!:"; then
-            MAJOR=1
-          elif echo "$COMMITS" | grep -qe "^feat"; then
-            MINOR=1;
+            NEW_VERSION="$INITIAL_VERSION"
+            echo "No stable release tag found; creating the initial release $NEW_VERSION."
           else
-            PATCH=1;
+            echo "Last stable tag: $LAST_TAG"
+            COMMITS=$(git log "$LAST_TAG"..HEAD --pretty=format:"%s")
+            IFS="." read -r MAJOR MINOR PATCH <<< "${LAST_TAG#v}"
+
+            if echo "$COMMITS" | grep -qE 'BREAKING CHANGE|!:'; then
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+            elif echo "$COMMITS" | grep -qE '^feat(\(.+\))?:'; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            else
+              PATCH=$((PATCH + 1))
+            fi
+
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
           fi
-          
-          IFS="." read -r M m p <<< "${LAST_TAG#v}"
-          M=$((M + MAJOR))
-          m=$((m + MINOR))
-          p=$((p + PATCH))
-          
-          if [ $MAJOR -eq 1 ]; then
-            m=0
-            p=0
-          elif [ $MINOR -eq 1 ]; then
-            p=0
-          fi
-          
-          NEW_VERSION="${M}.${m}.${p}"
+
           echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           echo "version=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Create VERSION file
@@ -67,7 +60,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add VERSION
-          git commit -m "chore: bump version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]" || echo "No changes to commit"
           git push origin main
 
       - name: Create Git tag
