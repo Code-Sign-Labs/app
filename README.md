@@ -43,5 +43,5 @@ Check out our [Trello](https://trello.com/b/ign4SDWN/code-sign) and see the list
 
 ## Roadmap
 
-- [ ] Finish the basic version of Code Sign App
-- [ ] Publish Code Sign as docker image to Docker Hub
+- [x] Finish the basic version of Code Sign App
+- [x] Publish Code Sign as docker image to Docker Hub
