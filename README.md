@@ -15,6 +15,12 @@ The Code Sign App provides a user-friendly interface that allows developers to e
 
 To get started with the Code Sign Controller, follow these steps:
 
+<details>
+
+<summary>Using GitHub repository</summary>
+
+# GitHub Repository Setup
+
 ```bash
 # 1. Copy the repository to your local machine
 git clone https://github.com/Code-Sign-Labs/app.git
@@ -35,6 +41,32 @@ docker compose exec php composer install
 # 6. Check if it works
 curl http://localhost:8080/
 ```
+
+</details>
+
+<details>
+
+<summary>Using Docker Image</summary>
+
+# Docker Image Setup
+
+```bash
+
+# 1. Pull the Docker image from Docker Hub
+docker pull francysdev/codesign-app:latest
+
+# 2. Configure environment variables (if needed)
+cp .env.example .env
+nano .env
+
+# 3. Run the Docker container
+docker run -d -p 8080:80 --name codesign francysdev/codesign-app:latest
+
+# 4. Check if it works
+curl http://localhost:8080/
+```
+
+</details>
 
 ## List of things to do
 
