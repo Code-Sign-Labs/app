@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# File System Forwarding
+RewriteRule ^fs/.*$ index.php [QSA,L]
+
+# Static files forwarding
+RewriteCond %{REQUEST_URI} !\.(png|jpg|webp|gif|jpeg|css|svg|js|woff|ttf|woff2|mp3|ico)$
+RewriteRule (.*) index.php [QSA,L]

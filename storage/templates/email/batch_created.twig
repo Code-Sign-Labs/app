@@ -1,0 +1,11 @@
+Hi {{ customer.label }}!
+
+We're excited to inform you that your batch has been successfully created.
+Your license keys can be activated on {{ batch.maxActivations }} devices.
+Here's list of your {{ batch.quantity }} license keys for {{ product.name }}:
+
+{% for licenseKey in batch.licenseKeys %}
+    - {{ licenseKey.licenseKey }} - {{ licenseKey.status.value|capitalize|replace({"_": " "}) }}
+{% endfor %}
+
+If you have any questions or need assistance, feel free to reach out to our support team.

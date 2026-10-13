@@ -1,0 +1,95 @@
+<?php
+declare(strict_types=1);
+namespace App\Service;
+
+use App\Entity\Webhook;
+use App\Entity\WebhookDelivery;
+use App\Enum\EventNameEnum;
+use App\Enum\WebhookDeliveryStatusEnum;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Exception\ORMException;
+use Doctrine\ORM\OptimisticLockException;
+use Throwable;
+
+class EventBusService
+{
+    protected EntityRepository $webhookRepository;
+    protected WebhookFactory $webhookFactory;
+    public function __construct(protected EntityManager $entityManager)
+    {
+        $this->webhookFactory = new WebhookFactory();
+        $this->webhookRepository = $this->entityManager->getRepository(Webhook::class);
+    }
+
+    /**
+     * @param EventNameEnum $event
+     * @param array $data
+     * @return void
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function triggerEvent(EventNameEnum $event, array $data): void
+    {
+        if (!$this->entityManager->isOpen()) {
+            error_log(sprintf('EventBusService skipped event [%s] because EntityManager is closed.', $event->value));
+            return;
+        }
+
+        // events json needs to contain our string $event
+        if ($this->entityManager->getConnection()->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\SQLitePlatform) {
+            // SQLite is used only by the isolated integration suite and does
+            // not implement MySQL's JSON_CONTAINS function.
+            $webhooks = array_values(array_filter(
+                $this->webhookRepository->findAll(),
+                static fn (Webhook $webhook): bool => in_array($event->value, $webhook->getEvents(), true)
+            ));
+        } else {
+            $webhooks = $this->webhookRepository->createQueryBuilder('w')
+                ->where('JSON_CONTAINS(w.events, :event) = 1')
+                ->setParameter('event', json_encode($event->value))
+                ->getQuery()
+                ->getResult();
+        }
+
+
+
+        /**
+         * @var Webhook $webhook
+         */
+        foreach ($webhooks as $webhook) {
+            try {
+                if (!$this->entityManager->isOpen()) {
+                    error_log(sprintf('EventBusService stopped event [%s] because EntityManager was closed mid-flight.', $event->value));
+                    return;
+                }
+
+                $webhookDelivery = new WebhookDelivery();
+                $webhookDelivery->setWebhook($webhook)
+                    ->setStatus(WebhookDeliveryStatusEnum::await_delivery)
+                    ->setRequestHeaders($webhook->getHeaders())
+                    ->setRequestBody($this->webhookFactory->create($webhook->getType(), $data, $event, $webhook, $webhookDelivery->getId()))
+                    ->setEventName($event)
+                    ->setSignature(
+                        $this->webhookFactory->createSignature(
+                            $webhookDelivery->getRequestBody(),
+                            $webhook->getSecret()
+                        )
+                    );
+
+                $this->entityManager->persist($webhookDelivery);
+                $this->entityManager->flush();
+            } catch (Throwable $exception) {
+                error_log(sprintf(
+                    'EventBusService failed for event [%s]: %s',
+                    $event->value,
+                    $exception->getMessage()
+                ));
+
+                if (!$this->entityManager->isOpen()) {
+                    return;
+                }
+            }
+        }
+    }
+}

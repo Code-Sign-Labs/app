@@ -1,0 +1,84 @@
+# Code Sign
+
+###
+# group: V1 / Signing
+# @name Get Public Key
+GET {{protocol}}://
+{{domain}}/api/v1/public-key
+
+###
+# group: V1 / Signing
+# @name Sign hash
+POST {{protocol}}://
+{{domain}}/api/v1/sign
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="license_key"
+
+{{license_key}}
+--WebAppBoundary
+Content-Disposition: form-data; name="activation_id"
+
+{{activation_id}}
+--WebAppBoundary
+Content-Disposition: form-data; name="algorithm"
+
+sha256
+--WebAppBoundary
+Content-Disposition: form-data; name="hash"
+
+example-hash
+--WebAppBoundary
+
+###
+# group: V1 / License
+# @name Validate License
+GET {{protocol}}://
+{{domain}}/api/v1/licenses/{{license_key}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+
+--WebAppBoundary
+
+###
+# group: V1 / License
+# @name List activations devices
+GET {{protocol}}://
+{{domain}}/api/v1/licenses/{{license_key}}/devices
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+
+--WebAppBoundary
+
+###
+# group: V1 / License
+# @name Activate license
+POST {{protocol}}://
+{{domain}}/api/v1/licenses/{{license_key}}/activate
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="device_name"
+
+{{$randomUserName}}
+--WebAppBoundary
+Content-Disposition: form-data; name="device_identifier"
+
+{{$randomUserAgent}}
+--WebAppBoundary
+
+###
+# group: V1 / License
+# @name Deactivate license
+POST {{protocol}}://
+{{domain}}/api/v1/licenses/{{license_key}}/deactivate
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="activation_id"
+
+{{activation_id}}
+--WebAppBoundary

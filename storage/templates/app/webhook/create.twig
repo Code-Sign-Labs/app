@@ -1,0 +1,165 @@
+{% extends "app/template.twig" %}
+
+{% block page %}Webhook Create{% endblock %}
+
+{% block content %}
+    <main class="p-8 max-w-3xl">
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Create Webhook</h2>
+            <p class="text-sm text-gray-500 mt-1">Configure an HTTP endpoint to receive event notifications from Code Sign.</p>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form class="space-y-6" method="POST">
+            <input type="hidden" name="__token" value="{{ csrf() }}">
+            <!-- Basic Info -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                <h3 class="text-sm font-semibold text-gray-900">Basic Information</h3>
+
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1.5">Name <span class="text-brand">*</span></label>
+                    <input type="text" id="name" name="name" required placeholder="e.g. License Events Notifier" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                    <p class="text-xs text-gray-400 mt-1">A descriptive name to identify this webhook.</p>
+                </div>
+
+                <div>
+                    <label for="url" class="block text-sm font-medium text-gray-700 mb-1.5">Endpoint URL <span class="text-brand">*</span></label>
+                    <input type="url" id="url" name="url" required placeholder="https://your-app.com/api/webhooks/codesign" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                    <p class="text-xs text-gray-400 mt-1">The URL where Code Sign will send HTTP POST requests.</p>
+                </div>
+                <div>
+                    <label for="type" class="block text-sm font-medium text-gray-700 mb-1.5">Type <span class="text-brand">*</span></label>
+                    <select id="type" required class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition bg-white" name="type">
+                        <option value="">Select a webhook type...</option>
+                        {% for type in webhook_types %}
+                            <option value="{{ type.name|lower }}">{{ type.name|replace({"_": " "})|capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Events -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                <h3 class="text-sm font-semibold text-gray-900">Subscribed Events</h3>
+                <p class="text-xs text-gray-500 -mt-2">Select which events should trigger this webhook.</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <div class="space-y-2">
+                            {% for event in events %}
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input name="events[]" value="{{ event.name|lower|replace({"_": "."}) }}" type="checkbox" class="w-4 h-4 text-brand border-gray-300 rounded focus:ring-brand/20">
+                                    <span class="text-sm text-gray-700">{{ event.name|lower|replace({"_": " "})|capitalize }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Headers -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900">Custom Headers</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">HTTP headers sent with each webhook request.</p>
+                    </div>
+                    <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-brand border border-brand/20 rounded-lg hover:bg-brand-light transition" onclick="addHeader()">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        Add Header
+                    </button>
+                </div>
+                <div id="headers-container" class="space-y-2">
+                </div>
+            </div>
+
+            <!-- Custom Payload -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Custom Payload Template</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Override the default request body. Use <code class="text-xs bg-gray-100 px-1 py-0.5 rounded font-mono">{event}</code>, <code class="text-xs bg-gray-100 px-1 py-0.5 rounded font-mono">{event_id}</code>, <code class="text-xs bg-gray-100 px-1 py-0.5 rounded font-mono">{data}</code>, <code class="text-xs bg-gray-100 px-1 py-0.5 rounded font-mono">{timestamp}</code> as variables.</p>
+                    <p class="text-xs text-gray-500 mt-0.5">It works only while using raw webhook!</p>
+                    <!-- Status validation -->
+                    <p class="text-xs mt-0.5" id="validationStatus"></p>
+                </div>
+                <textarea name="customPayload" id="customPayload" rows="8" placeholder='{
+  "event": "{event}",
+  "event_id": "{event_id}",
+  "data": {data},
+  "timestamp": "{timestamp}",
+  "source": "callsign"
+}' class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition resize-none font-mono"></textarea>
+                <div class="flex items-center gap-2">
+                    <button id="useDefaultPayloadBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Use Default Payload
+                    </button>
+                    <button id="validateJsonBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Validate JSON
+                    </button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-end gap-3">
+                <a href="webhooks.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</a>
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand hover:bg-brand-hover rounded-lg transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Create Webhook
+                </button>
+            </div>
+        </form>
+    </main>
+    <script>
+        const customPayload = document.getElementById('customPayload');
+        const useDefaultPayloadBtn = document.getElementById('useDefaultPayloadBtn');
+
+        const defaultPayload = {
+            "event": "{event}",
+            "data": "{data}",
+            "timestamp": "{timestamp}",
+            "event_id": "{event_id}",
+            "source": "codesign"
+        }
+
+        useDefaultPayloadBtn.addEventListener('click', () => {
+            customPayload.value = JSON.stringify(defaultPayload, null, 2);
+        })
+
+        const validateJsonBtn = document.getElementById("validateJsonBtn");
+        const validationStatus = document.getElementById('validationStatus');
+        validateJsonBtn.addEventListener('click', () => {
+            try {
+                JSON.parse(customPayload.value);
+                validationStatus.textContent = "Valid JSON";
+                validationStatus.className = "text-xs text-green-600 mt-0.5";
+            } catch (e) {
+                validationStatus.textContent = "Invalid JSON";
+                validationStatus.className = "text-xs text-brand mt-0.5";
+            }
+        })
+
+        let headers = 0;
+        function addHeader() {
+            headers++;
+            const container = document.getElementById('headers-container');
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2';
+            row.innerHTML = `
+        <input name="headers[][${headers}][key]" type="text" placeholder="Header name" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition font-mono">
+        <span class="text-gray-400">:</span>
+        <input name="headers[][${headers}][value]" type="text" placeholder="Header value" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition font-mono">
+        <button type="button" class="p-2 text-gray-400 hover:text-red-500 transition" onclick="this.parentElement.remove()">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      `;
+            container.appendChild(row);
+        }
+    </script>
+{% endblock %}
