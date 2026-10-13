@@ -37,11 +37,20 @@ class EventBusService
         }
 
         // events json needs to contain our string $event
-        $webhooks = $this->webhookRepository->createQueryBuilder('w')
-            ->where('JSON_CONTAINS(w.events, :event) = 1')
-            ->setParameter('event', json_encode($event->value))
-            ->getQuery()
-            ->getResult();
+        if ($this->entityManager->getConnection()->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\SQLitePlatform) {
+            // SQLite is used only by the isolated integration suite and does
+            // not implement MySQL's JSON_CONTAINS function.
+            $webhooks = array_values(array_filter(
+                $this->webhookRepository->findAll(),
+                static fn (Webhook $webhook): bool => in_array($event->value, $webhook->getEvents(), true)
+            ));
+        } else {
+            $webhooks = $this->webhookRepository->createQueryBuilder('w')
+                ->where('JSON_CONTAINS(w.events, :event) = 1')
+                ->setParameter('event', json_encode($event->value))
+                ->getQuery()
+                ->getResult();
+        }
 
 
 

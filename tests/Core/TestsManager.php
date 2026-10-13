@@ -16,7 +16,7 @@ class TestsManager
     }
 
     /**
-     * Scan given directory for test files and instantiate test classes
+     * Scan given directory for test files and instantiate test classes.
      * @param string $directory
      * @return Test[]
      */
@@ -41,7 +41,8 @@ class TestsManager
             }
 
             $className = pathinfo($file, PATHINFO_FILENAME);
-            $testClass = "\\Tests\\Units\\" . $className;
+            $namespace = basename($directory);
+            $testClass = "\\Tests\\" . $namespace . "\\" . $className;
             if (!class_exists($testClass)) {
                 continue;
             }
@@ -59,7 +60,10 @@ class TestsManager
 
     public function run(): void
     {
-        $tests = $this->scanTestsDirectory(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'Units');
+        $tests = array_merge(
+            $this->scanTestsDirectory(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'Units'),
+            $this->scanTestsDirectory(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'Integration'),
+        );
         echo str_repeat("=", 32) . "\n";
 
         foreach ($tests as $test) {
@@ -75,8 +79,7 @@ class TestsManager
 
             foreach ($methods as $method) {
                 $class = get_class($test);
-                // Remove Tests\Units\ from the $class
-                $class = str_replace('Tests\\Units\\', '', $class);
+                $class = str_replace(['Tests\\Units\\', 'Tests\\Integration\\'], '', $class);
 
                 $green  = "\033[32m";
                 $red    = "\033[31m";

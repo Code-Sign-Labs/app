@@ -24,6 +24,7 @@ use Framework\Kernel\Subscribers\ViewEngineSubscriber;
 use Framework\Router\RouteTable;
 use InvalidArgumentException;
 use ReflectionException;
+use Redis;
 
 class Kernel
 {
@@ -67,6 +68,12 @@ class Kernel
     ) {
         $this->container = new Container();
         $this->dependencyInjection = new DependencyInjection($this->container);
+
+        // API firewalls type-hint Redis even when rate limiting is disabled.
+        // Tests use an unconnected client so the suite never needs a Redis server.
+        if ($this->APP_MODE === AppEnum::APP_MODE_TESTING) {
+            $this->container->singleton(Redis::class, static fn () => new Redis());
+        }
 
         $this->container->singleton(EventManager::class, function () {
             return new EventManager($this->container);

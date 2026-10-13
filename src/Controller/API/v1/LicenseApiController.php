@@ -123,7 +123,7 @@ class LicenseApiController extends CoreApiController
         /**
          * @var Activation $activation
          */
-        foreach($license->getActivations() as $activation) {
+        foreach($this->entityManager->getRepository(Activation::class)->findBy(['licenseKey' => $license]) as $activation) {
             $activations[] = [
                 'id' => $activation->getId(),
                 'ip' => $activation->getIpAddress(),
@@ -281,6 +281,14 @@ class LicenseApiController extends CoreApiController
         $activation = $this->entityManager->getRepository(Activation::class)->find($activationId);
         if(!$activation) {
             return $this->error("ACTIVATION_NOT_FOUND", "Activation not found", 404);
+        }
+
+        if ($activation->getLicenseKey()->getId() !== $license->getId()) {
+            return $this->error("ACTIVATION_NOT_FOUND", "Activation not found", 404);
+        }
+
+        if (!$activation->isActive()) {
+            return $this->error("ACTIVATION_NOT_ACTIVE", "Activation is not active", 403);
         }
 
         $license->setCurrentActivations(max($license->getCurrentActivations() - 1, 0));

@@ -10,6 +10,8 @@ use Framework\Core\EventManager;
 use Framework\Kernel\KernelContext;
 use Framework\Kernel\KernelEventSubscriberInterface;
 use Framework\Kernel\KernelOptions;
+use Framework\AppEnum;
+use Tests\Core\RouterTestClient;
 
 class RouterSubscriber implements KernelEventSubscriberInterface
 {
@@ -41,7 +43,9 @@ class RouterSubscriber implements KernelEventSubscriberInterface
                 $this->options->debugBar['messages']->addMessage('Router started', 'debug');
             }
 
-            $router = new Router($routeTable, $this->container, $this->options->appMode);
+            $router = $this->options->appMode === AppEnum::APP_MODE_TESTING
+                ? new RouterTestClient($routeTable, $this->container, $this->options->appMode)
+                : new Router($routeTable, $this->container, $this->options->appMode);
 
             /** @var KernelContext|null $kernelContext */
             $kernelContext = $data['kernelContext'] ?? null;
